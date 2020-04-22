@@ -1,4 +1,4 @@
-#!/bin/bash$LOGFILE
+#!/bin/bash
 
 export FOLDER=/home/ec2-user/barx
 
