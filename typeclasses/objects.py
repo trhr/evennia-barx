@@ -159,7 +159,11 @@ class Object(DefaultObject):
 
      """
 
-    pass
+    def at_get(self, getter):
+        self.db.test_attr = self.test_method
+
+    def test_method(self):
+        pass
 
 class Bones(Object):
     pass
