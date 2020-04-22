@@ -34,24 +34,9 @@ from evennia.settings_default import *
 # This is the name of your game. Make it catchy!
 SERVERNAME = "Barx"
 GAME_SLOGAN = "Can someone tell me if this is a MUD or a MUSH?"
-TELNET_PORTS = [32767]
-START_LOCATION = "#21"
-DEFAULT_HOME = "#21"
 INLINEFUNC_ENABLED = True
 WEBSERVER_ENABLED = False
 AMP_PORT = 32766
-
-GAME_INDEX_ENABLED = True
-GAME_INDEX_LISTING = \
-{   'game_name': 'Barx',
-    'game_status': 'launched',
-    'game_website': '',
-    'listing_contact': 'sage@limitlessinteractive.com',
-    'long_description': "It's ruff out there for a dog.",
-    'short_description': 'A Shaggy Dog Story',
-    'telnet_hostname': 'mud.invertedspectra.com',
-    'telnet_port': '32767'
-}
 
 ######################################################################
 # Settings given in secret_settings.py override those in this file.
