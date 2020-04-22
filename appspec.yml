@@ -1,7 +1,7 @@
 version: 0.0
 os: linux
 files:
-  - source: ./install.txt
+  - source: ./deploy/install.txt
     destination: /home/ec2-user/barx/
 hooks:
   BeforeInstall:
