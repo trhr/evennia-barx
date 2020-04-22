@@ -1,8 +1,6 @@
 version: 0.0
 os: linux
 files:
-  - source: deploy/install.txt
-    destination: /home/ec2-user/barx/deploy/
   - source: .
     destination: /home/ec2-user/barx
 hooks:
