@@ -1,4 +1,4 @@
 #!/bin/bash
 
 service barx start
-echo "ApplicationStart completed." >> $LOGFILE
+echo "ApplicationStart completed." >> "$LOGFILE"

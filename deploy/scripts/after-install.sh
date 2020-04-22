@@ -1,3 +1,3 @@
 #!/bin/bash
 
-echo "AfterInstall completed." >> $LOGFILE
+echo "AfterInstall completed." >> "$LOGFILE"

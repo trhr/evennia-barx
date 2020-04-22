@@ -1,17 +1,17 @@
-#!/bin/bash
+#!/bin/bash$LOGFILE
 
 export FOLDER=/home/ec2-user/barx
 
-cd $FOLDER
+cd "$FOLDER" || exit 1
 service barx stop
 
-if [ -d $FOLDER ]
+if [ -d "$FOLDER" ]
 then
-  rm -rf $FOLDER
+  rm -rf "$FOLDER"
 fi
 
-mkdir -p $FOLDER
+mkdir -p "$FOLDER"
 
 export LOGFILE=/home/ec2-user/barx/deploylog
-touch $LOGFILE
-echo "Starting install of barx" >> $LOGFILE
+touch "$LOGFILE"
+echo "Starting install of barx" >> "$LOGFILE"
