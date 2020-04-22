@@ -1,19 +1,19 @@
 version: 0.0
 os: linux
 files:
-  - source: ./deploy/install.txt
+  - source: deploy/install.txt
     destination: /home/ec2-user/barx/
 hooks:
   BeforeInstall:
-    - location: ./deploy/scripts/before-install.sh
+    - location: deploy/scripts/before-install.sh
       timeout: 900
   AfterInstall:
-    - location: ./deploy/scripts/after-install.sh
+    - location: deploy/scripts/after-install.sh
       timeout: 900
   ApplicationStart:
-    - location: ./deploy/scripts/application-start.sh
+    - location: deploy/scripts/application-start.sh
       timeout: 900
   ValidateService:
-    - location: ./deploy/scripts/validate-service.sh
+    - location: deploy/scripts/validate-service.sh
       timeout: 900
 
