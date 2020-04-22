@@ -5,15 +5,15 @@ files:
     destination: /home/ec2-user/barx/
 hooks:
   BeforeInstall:
-    - location: ./scripts/before-install.sh
+    - location: ./deploy/scripts/before-install.sh
       timeout: 900
   AfterInstall:
-    - location: ./scripts/after-install.sh
+    - location: ./deploy/scripts/after-install.sh
       timeout: 900
   ApplicationStart:
-    - location: ./scripts/application-start.sh
+    - location: ./deploy/scripts/application-start.sh
       timeout: 900
   ValidateService:
-    - location: ./scripts/validate-service.sh
+    - location: ./deploy/scripts/validate-service.sh
       timeout: 900
 
