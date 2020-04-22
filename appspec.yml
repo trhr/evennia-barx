@@ -2,7 +2,9 @@ version: 0.0
 os: linux
 files:
   - source: deploy/install.txt
-    destination: /home/ec2-user/barx/
+    destination: /home/ec2-user/barx/deploy/
+  - source: source
+    destination: /home/ec2-user/barx
 hooks:
   BeforeInstall:
     - location: deploy/scripts/before-install.sh
