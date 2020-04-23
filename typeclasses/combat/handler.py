@@ -45,7 +45,7 @@ class Tilt(DefaultScript):
         self._sort_actions()
         self._queue_actions()
         self.db.actions = []
-
+        self.msg_all("Running at_repeat")
 
     def at_stop(self):
         """
@@ -166,7 +166,7 @@ class Tilt(DefaultScript):
         self.db.tilt.update({character: self.db.tilt.get(character) - tilt_damage})
 
         self.db.wills.update({target: self.db.wills.get(target) - will_damage})
-        self.msg_all(f"Tilt: {self.db.tilt}")
+        self.msg_all(f"Tilt: {self.db.tilt} // Will: {self.db.wills}")
         self.loss_by_tilt()
         return True
 
