@@ -47,7 +47,7 @@ class Tilt(DefaultScript):
         self._sort_actions()
         self._queue_actions()
         self.db.actions = []
-        self.msg_all("Running at_repeat")
+        self.msg_all("You sense a lull in the combat...")
 
     def at_stop(self):
         """
@@ -94,7 +94,8 @@ class Tilt(DefaultScript):
         """
 
         existing_actions = self.db.actions
-
+        if not existing_actions:
+            self.msg_all(f"{character} readies an attack.")
         action_dict = { 
                 "character" : character,
                 "target" : target,
@@ -161,6 +162,8 @@ class Tilt(DefaultScript):
             action = self._get_next_action()
         character = action.get("character")
         target = action.get("target")
+        attack_verb = action.get("attack_verb", "swing")
+        weapon_noun = action.get("weapon_noun", "fist")
         tilt_damage = action.get("tilt_damage", 0)
         will_damage = action.get("will_damage", 0)
 
@@ -168,13 +171,21 @@ class Tilt(DefaultScript):
         self.db.tilt.update({character: self.db.tilt.get(character) - tilt_damage})
 
         self.db.wills.update({target: self.db.wills.get(target) - will_damage})
-        self.msg_all(f"Tilt: {self.db.tilt} // Will: {self.db.wills}")
+
+        effect_str = ""
+        if tilt_damage:
+            effect_str += f"{character} feels the battle shift in their favor. "
+        if will_damage:
+            effect_str += f"{target} loses some of their will to fight!"
+
+
+        self.msg_all(f"{character} {attack_verb} a {weapon_noun} at {target}. {effect_str}")
         self.loss_by_tilt()
         return True
 
     def msg_all(self, msg):
         for character in self.db.wills.keys():
-            character.msg(msg)
+            character.msg(f"|[200|w「|-{msg}|-」|n")
 
     def loss_by_tilt(self):
         characters = self.db.starting_wills.keys()
@@ -189,8 +200,8 @@ class Tilt(DefaultScript):
                             self.msg_all(f"{character} tries to flee but is blocked by {attacker}!")
                             break
                     if not blocked:
-                        self.remove_character(character)
                         self.msg_all(f"{character} has fled!")
+                        self.remove_character(character)
             except AttributeError:
                 pass
 
