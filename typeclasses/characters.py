@@ -34,7 +34,7 @@ class Character(DefaultCharacter):
     def at_object_creation(self):
         super().at_object_creation()
         self.db.sniffed=[self]
-
+        self.db.will=10
        #"|/|/$alt(HOW TO PLAY [READ THIS OR GET BIT],|230|225)|/|/Welcome to Barx! You are a dog. You have three commands.|/You can |*SNIFF|n other dogs, |*DIG|n up bones, or |*BURY|n your bones.|/(type 'help <command>' to learn more about using these commands.|/|/WINNING THE GAME: Win by being the dog with the most buried bones.|/|/KEEPING OTHER PEOPLE FROM WINNING: Dig up their bones. They become your bones.|/|/First to 10,000 points worth of buried bones wins. The server self-destructs at this point.|/|/|rReady to play? Type 'join'|/|/"
 
     def get_sniff_name(self, sniffer):
