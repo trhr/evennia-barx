@@ -44,7 +44,7 @@ class Join(Command):
 
     def func(self):
         if self.caller.location.dbref == "#21":
-            wild.enter_wilderness(self.caller, "wilderness")
+            wild.enter_wilderness(self.caller, name="wilderness")
             self.msg("ARF ARF > X GON GIVE IT TO YOU < LOOK AROUND")
 
 class Score(Command):
@@ -125,7 +125,7 @@ class Unearth(Command):
             self.target.locks.add("get:all()")
             self.target.locks.add("control:none()")
             self.target.location = self.caller
-            self.msg(f"You dig up {target}!")
+            self.msg(f"You dig up {self.target}!")
             self.caller.location.msg_contents(f"{self.caller} digs up {self.target}!", exclude=self.caller)
 
 class Attack(Command):
