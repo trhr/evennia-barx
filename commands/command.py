@@ -9,7 +9,8 @@ from evennia import Command as BaseCommand
 from evennia.utils.utils import inherits_from
 from typeclasses.objects import Bones
 from typeclasses.characters import Character
-
+from evennia import create_script
+from typeclasses.combat.handler import Tilt
 # from evennia import default_cmds
 
 
@@ -51,18 +52,6 @@ class Score(Command):
  
     def func(self):
         # get all bones
-#        from typeclasses.objects import Bones
-#        bones = Bones.objects.all()
-#        scores = {}
-#        for bone in bones:
-#            if bone.db.buried:
-#                scores.update({bone.locks.get("control"): scores.get(bone.locks.get("control"),0)+bone.db.value})
-
-#        self.msg("|r----Top |gDogs----|n")
-#        self.msg("|rPlayer|-|-|-|-|-Score|n")
-#        self.msg("---------------------------------------")
-#        for k,v in scores.items():
-#            self.msg(f"{k}|-|-|-|-{v}")
       from world.topdogs import scorelist
 
       self.msg(scorelist())
@@ -138,6 +127,29 @@ class Unearth(Command):
             self.target.location = self.caller
             self.msg(f"You dig up {target}!")
             self.caller.location.msg_contents(f"{self.caller} digs up {self.target}!", exclude=self.caller)
+
+class Attack(Command):
+    """
+    Start a fight!
+    """
+
+    key = "kill"
+    aliases = ["attack", "fight"]
+    target = None
+
+    def parse(self):
+        if self.args:
+            self.target = self.caller.search(self.args.strip())
+        else:
+            self.caller.msg("Fight who?")
+
+    def func(self):
+        if self.target:
+            tilt_handler = create_script(Tilt)
+            tilt_handler.add_character(self.caller)
+            tilt_handler.add_character(self.target)
+            self.caller.location.msg_contents(f"{self.caller} has a bone to pick with {self.target}!")
+
 
 # -------------------------------------------------------------
 #
