@@ -44,7 +44,7 @@ class Join(Command):
 
     def func(self):
         if self.caller.location.dbref == "#21":
-            wild.enter_wilderness(self.caller)
+            wild.enter_wilderness(self.caller, "wilderness")
             self.msg("ARF ARF > X GON GIVE IT TO YOU < LOOK AROUND")
 
 class Score(Command):
