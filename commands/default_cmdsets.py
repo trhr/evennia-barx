@@ -15,7 +15,7 @@ own cmdsets by inheriting from them or directly from `evennia.CmdSet`.
 """
 
 from evennia import default_cmds
-from commands.command import Bury, Sniff, Unearth, Score, Join
+from commands.command import Bury, Sniff, Unearth, Score, Join, Attack, Punch
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
@@ -39,6 +39,8 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(Unearth())
         self.add(Score())
         self.add(Join())
+        self.add(Attack())
+        self.add(Punch())
 
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """
