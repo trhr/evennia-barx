@@ -23,24 +23,26 @@ class Tilt(DefaultScript):
     - However, combat also regularly 'lulls,' either due to an injury, tiredness, or simply having nothing else to do.
 
     """
-
-    key = "TiltHandler"
-    persistent = True
-    interval = 15
-    start_delay=True
-    repeats=0
-
-    def at_start(self):
-        """
-        Sets up the script
-        """
+    def at_script_creation(self):
+        self.key = "TiltHandler"
+        self.persistent = True
+        self.interval = 15
+        self.start_delay = True
+        self.repeats = 0
         self.db.tilt = {}
         self.db.starting_wills = {}
         self.db.wills = {}
         self.db.actions = []
 
+    def at_start(self):
+        """
+        Sets up the script
+        """
+        for character in self.db.wills.keys():
+            self.add_character(character)
+
     def at_repeat(self):
-        if len(self.db.wills)<2:
+        if len(self.db.wills) < 2:
             self.stop()
         self._sort_actions()
         self._queue_actions()
@@ -51,7 +53,7 @@ class Tilt(DefaultScript):
         """
         Cleans up the script
         """
-        characters = self.db.starting_wills.keys()
+        characters = self.db.wills.keys()
         for character in characters:
             self.remove_character(character)
 
