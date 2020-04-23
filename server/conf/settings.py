@@ -37,7 +37,7 @@ GAME_SLOGAN = "Can someone tell me if this is a MUD or a MUSH?"
 INLINEFUNC_ENABLED = True
 WEBSERVER_ENABLED = False
 AMP_PORT = 32766
-
+SERVER_SESSION_CLASS="typeclasses.sessions.Session"
 ######################################################################
 # Settings given in secret_settings.py override those in this file.
 ######################################################################
