@@ -47,4 +47,5 @@ class Character(DefaultCharacter):
         if kwargs.get("fullwidth"):
             client_width = self.sessions.all()[0].protocol_flags.get("SCREENWIDTH", {0:80})
             client_width_px = client_width.get(0)
-            self.msg(f"$pad({msg}, {client_width_px},c,-)")
+            msg = f"$pad({msg}, {client_width_px},c,-)"
+        super().msg(msg)
