@@ -1,0 +1,51 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Barx Tests
+
+on:
+  push:
+
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: evennia
+          POSTGRES_DB: evennia
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        mkdir barx
+        shopt -s extglob dotglob
+        mv !(barx) barx
+        git clone https://github.com/trhr/evennia
+        pip install -r evennia/requirements.txt
+        pip install -r barx/requirements.txt
+        pip install psycopg2-binary
+        pip install -e evennia
+    - name: Create Evennia game
+      run: |
+        cp evennia/.travis/postgresql_settings.py barx/server/conf/settings.py
+        cd barx
+        evennia migrate --run-syncdb
+        evennia collectstatic --noinput
+    - name: Test with Evennia Test
+      run: |
+        cd barx
+        evennia test --settings settings.py .
