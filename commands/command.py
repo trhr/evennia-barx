@@ -162,6 +162,34 @@ class Punch(Command):
             self.caller.msg("[Added Punch to Stack]")
         else:
             self.caller.msg("You're not in combat!")
+
+class Jab(Command):
+    """
+    Throw a jab!
+    """
+    key = "jab"
+
+    def func(self):
+        if self.caller.ndb.tilt_handler:
+            self.caller.ndb.tilt_handler.add_action_to_stack(self.caller, self.caller.ndb.target, tilt_damage=1, keyframes=100)
+            self.caller.msg("[Added Jab to Stack]")
+        else:
+            self.caller.msg("You're not in combat!")
+
+class Haymaker(Command):
+    """
+    Throw a punch!
+    """
+    key = "haymaker"
+
+    def func(self):
+        if self.caller.ndb.tilt_handler:
+            self.caller.ndb.tilt_handler.add_action_to_stack(self.caller, self.caller.ndb.target, will_damage=5, keyframes=1000)
+            self.caller.msg("[Added Haymaker to Stack]")
+        else:
+            self.caller.msg("You're not in combat!")
+
+
 # -------------------------------------------------------------
 #
 # The default commands inherit from

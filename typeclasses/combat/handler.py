@@ -27,6 +27,8 @@ class Tilt(DefaultScript):
     key = "TiltHandler"
     persistent = True
     interval = 15
+    start_delay=True
+    repeats=0
 
     def at_start(self):
         """
@@ -165,6 +167,7 @@ class Tilt(DefaultScript):
 
         self.db.wills.update({target: self.db.wills.get(target) - will_damage})
         self.msg_all(f"Tilt: {self.db.tilt}")
+        self.loss_by_tilt()
         return True
 
     def msg_all(self, msg):
