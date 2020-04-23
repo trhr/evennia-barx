@@ -32,7 +32,7 @@ class Tilt(DefaultScript):
         """
         Sets up the script
         """
-        self.db.tilt = 0
+        self.db.tilt = {}
         self.db.starting_wills = {}
         self.db.wills = {}
         self.db.actions = []
@@ -41,8 +41,8 @@ class Tilt(DefaultScript):
         if len(self.db.wills)<2:
             self.stop()
         self._sort_actions()
-        for character in self.db.wills.keys():
-            self._queue_actions(character)
+        self._queue_actions()
+        self.db.actions = []
 
 
     def at_stop(self):
@@ -62,6 +62,8 @@ class Tilt(DefaultScript):
             character.ndb.target = target
         self.db.starting_wills.update({character: character.db.will})
         self.db.wills.update({character: character.db.will})
+        self.db.tilt.update({character: 0})
+        character.ndb.combat_round_actions = []
         return True
 
     def remove_character(self, character):
@@ -114,45 +116,53 @@ class Tilt(DefaultScript):
                 action.get("character").ndb.combat_round_actions = []
             action.get("character").ndb.combat_round_actions.append(action)
 
-    def _queue_actions(self, character):
+    def _queue_actions(self):
         """
-            Queue a character's actions with delays.
+            Queue character actions with delays.
         """
-        actions = character.ndb.combat_round_actions
-        process_stack = []
-        keyframes_in_queue = 0
-        action: dict
-        while len(actions) > 0:
-            action = actions.pop(0)
-            process_stack.append(
-                    delay(
-                        keyframes_in_queue/1000,
-                        self._process_action,
-                        action
+        # print(f"Queuing actions for {character}")
+        for character in self.db.wills.keys():
+            process_stack = []
+            keyframes_in_queue = 0
+            action: dict
+            while len(character.ndb.combat_round_actions) > 0:
+                action = character.ndb.combat_round_actions.pop(0)
+                if action.get("keyframes") > 0:
+                    process_stack.append(
+                            delay(
+                                keyframes_in_queue/1000,
+                                self._process_action,
+                                action
+                            )
                     )
-            )
-            keyframes_in_queue += action.get("keyframes", 1000)
-        character.ndb.process_stack = defer.DeferredList(process_stack)
-        character.ndb.process_stack.addCallback(self._cleanup_round, character)
-        return character.ndb.process_stack
+                    keyframes_in_queue += action.get("keyframes", 1000)
+                else: # Instant action
+                    process_stack.append(self._process_action(action))
+            #character.ndb.process_stack = defer.DeferredList(process_stack)
+            #character.ndb.process_stack.addCallback(self._cleanup_round, character)
+            character.ndb.process_stack = process_stack
 
     def _cleanup_round(self, character):
         del character.ndb.process_stack
-        del character.ndb.combat_round_actions
+        self.db.actions = []
+        self.msg_all(f"There is a lull in the combat...")
+        return True
 
     def _process_action(self, action=None):
         """
         Take the action that was previously delayed
         """
+
         if not action:
             action = self._get_next_action()
-
         character = action.get("character")
         target = action.get("target")
         tilt_damage = action.get("tilt_damage", 0)
         will_damage = action.get("will_damage", 0)
 
-        self.db.tilt += tilt_damage
+        self.db.tilt.update({target: self.db.tilt.get(target) + tilt_damage})
+        self.db.tilt.update({character: self.db.tilt.get(character) - tilt_damage})
+
         self.db.wills.update({target: self.db.wills.get(target) - will_damage})
         self.msg_all(f"Tilt: {self.db.tilt}")
         return True
@@ -163,10 +173,19 @@ class Tilt(DefaultScript):
 
     def loss_by_tilt(self):
         characters = self.db.starting_wills.keys()
+        blocked = False
         for character in characters:
             try:
-                if self.db.tilt > self.db.wills.get(character):
-                    self.remove_character(character)
+                if self.get_tilt(character) > self.db.wills.get(character):
+                    attackers = self.get_attackers(character)
+                    for attacker in attackers:
+                        if attacker.db.noflee:
+                            blocked = True
+                            self.msg_all(f"{character} tries to flee but is blocked by {attacker}!")
+                            break
+                    if not blocked:
+                        self.remove_character(character)
+                        self.msg_all(f"{character} has fled!")
             except AttributeError:
                 pass
 
@@ -180,8 +199,18 @@ class Tilt(DefaultScript):
         if location:
             character.db.injuries.update({location: severity})
 
-    def get_current_tilt(self):
-        return self.db.tilt
+    def get_tilt(self, character):
+        return self.db.tilt.get(character)
+
+    def get_attackers(self, character):
+        """
+        Gets the list of characters targeting a character
+        """
+        attackers=[]
+        for participant in self.db.wills.keys():
+            if participant.ndb.target == character:
+                attackers.append(participant)
+        return attackers
 
     def _get_next_action(self):
         "Remove the next action from the queue and return it"

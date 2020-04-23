@@ -1,8 +1,8 @@
-from evennia.utils.test_resources import EvenniaTest
+from evennia.utils.test_resources import EvenniaTest, mockdelay, mockdeferLater
 from typeclasses.combat.handler import Tilt
 from evennia import create_script
-import time
-from evennia.utils import delay
+from mock import Mock, patch
+
 
 class TestCombat(EvenniaTest):
 
@@ -14,7 +14,9 @@ class TestCombat(EvenniaTest):
     def get_handler(self):
         chandler = create_script(Tilt)
         chandler.add_character(self.char1)
+        self.char1.ndb.target = self.char2
         chandler.add_character(self.char2)
+        self.char2.ndb.target = self.char1
         return chandler
 
     def test_script_creation(self):
@@ -29,19 +31,27 @@ class TestCombat(EvenniaTest):
 
     def test_tilt_exists(self):
         chandler = self.get_handler()
-        self.assertEquals(chandler.get_current_tilt(), 0)
+        self.assertEquals(chandler.get_tilt(self.char1), 0)
 
     def test_attack(self):
         chandler = self.get_handler()
         self.assertTrue(chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=5))
         self.assertTrue(chandler._process_action())
-        self.assertNotEquals(chandler.db.tilt, 0)
+        self.assertNotEquals(chandler.get_tilt(self.char1), 0)
+        self.assertEquals(chandler.get_tilt(self.char2), 5)
 
     def test_victory_by_tilt(self):
         chandler = self.get_handler()
-        chandler.db.tilt=250
+        chandler.db.tilt[self.char1]=250
         chandler.loss_by_tilt()
         self.assertIsNone(self.char1.ndb.tilt_handler)
+
+    def test_nosurrender(self):
+        chandler = self.get_handler()
+        chandler.db.tilt[self.char1]=250
+        self.char2.db.noflee = True
+        chandler.loss_by_tilt()
+        self.assertIsNotNone(self.char1.ndb.tilt_handler)
 
     def test_square_hit(self):
         chandler = self.get_handler()
@@ -69,18 +79,6 @@ class TestCombat(EvenniaTest):
 #    def test_wounding(self):
 #        chandler = self.get_handler()
 
-    def test_attack_combo(self):
-        chandler = self.get_handler()
-        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=1, keyframes=10000)
-        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=1, keyframes=10000)
-        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=1, keyframes=10000)
-        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=1, keyframes=10000)
-        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=1, keyframes=10000)
-        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=1, keyframes=10000)
-        chandler._sort_actions()
-        self.assertEqual(len(self.char1.ndb.combat_round_actions), 3)
-        self.assertEqual(len(self.char2.ndb.combat_round_actions), 3)
-
     def test_attack_keyframe(self):
         chandler = self.get_handler()
         chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=1, keyframes=500)
@@ -90,26 +88,38 @@ class TestCombat(EvenniaTest):
         total_keyframes = chandler._get_total_keyframes(self.char1)
         self.assertEqual(total_keyframes, 1000)
 
-
-    def test_combat_lull(self):
+    def test_attack_combo(self):
         chandler = self.get_handler()
-        self.assertIsNone(self.char1.ndb.combat_round_actions)
-        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=5, keyframes=200)
-        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=2, keyframes=400)
-        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=3, keyframes=600)
-        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=6, keyframes=200)
-        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=8, keyframes=400)
-        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=1, keyframes=600)
+        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=5, keyframes=0)
+        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=5, keyframes=0)
+        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=8, keyframes=0)
+        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=8, keyframes=0)
         chandler._sort_actions()
-        self.assertIsNotNone(self.char1.ndb.combat_round_actions)
-        char1_stack = chandler._queue_actions(self.char1)
-        char2_stack = chandler._queue_actions(self.char2)
-        self.assertIsNotNone(self.char1.ndb.combat_round_actions)
-        self.assertEqual(chandler.db.tilt, 0)
-        # TODO Test the deferred value after all the actions have been added
+        self.assertEqual(len(self.char1.ndb.combat_round_actions), 2)
+        self.assertEqual(len(self.char2.ndb.combat_round_actions), 2)
+        chandler.at_repeat()
+        self.assertEqual(chandler.get_tilt(self.char1), 6)
 
-    def resolve_full_round_combat(self):
+    @patch("typeclasses.combat.handler.delay", mockdelay)
+    def test_full_round_combat(self):
+        print("Testing combat lull")
         chandler = self.get_handler()
+        self.assertEqual(self.char1.ndb.combat_round_actions, [])
+        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=1, keyframes=1000)
+        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=2, keyframes=1000)
+        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=3, keyframes=1000)
+        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=6, keyframes=1000)
+        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=8, keyframes=1000)
+        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=1, keyframes=1000)
+        chandler.at_repeat()
+        self.assertEqual(chandler.get_tilt(self.char1), 9)
+        self.assertEqual(self.char1.ndb.combat_round_actions, [])
 
-    def test_nosurrender(self):
-        chandler = self.get_handler
+    def test_cleanup(self):
+        chandler = self.get_handler()
+        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=1, keyframes=1000)
+        chandler.at_repeat()
+        chandler.remove_character(self.char1)
+        self.assertIsNone(self.char1.ndb.tilt_handler)
+        self.assertIsNone(self.char2.ndb.tilt_handler)
+
