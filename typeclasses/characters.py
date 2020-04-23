@@ -42,3 +42,4 @@ class Character(DefaultCharacter):
             return self.key
         else:
             return "Someone"
+

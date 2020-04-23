@@ -185,9 +185,7 @@ class Tilt(DefaultScript):
 
     def msg_all(self, msg):
         for character in self.db.wills.keys():
-            client_width = character.sessions.all()[0].protocol_flags.get("SCREENWIDTH", {0:80})
-            client_width = client_width.get(0)
-            character.msg(f"|[200|w「$pad({msg}, {client_width-2}」|n,c,-) ")
+            character.full_width_msg(f"|[200|w{msg}|n")
 
     def loss_by_tilt(self):
         characters = self.db.starting_wills.keys()
