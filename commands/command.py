@@ -146,11 +146,21 @@ class Attack(Command):
     def func(self):
         if self.target:
             tilt_handler = create_script(Tilt)
-            tilt_handler.add_character(self.caller)
-            tilt_handler.add_character(self.target)
+            tilt_handler.add_character(self.caller, target=self.target)
+            tilt_handler.add_character(self.target, target=self.caller)
             self.caller.location.msg_contents(f"{self.caller} has a bone to pick with {self.target}!")
 
+class Punch(Command):
+    """
+    Throw a punch!
+    """
+    key = "punch"
 
+    def func(self):
+        if self.caller.ndb.tilt_handler:
+            self.caller.ndb.tilt_handler.add_action_to_stack(self.caller, self.caller.ndb.target, tilt_damage=5, keyframe=500)
+        else:
+            self.caller.msg("You're not in combat!")
 # -------------------------------------------------------------
 #
 # The default commands inherit from

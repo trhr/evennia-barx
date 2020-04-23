@@ -108,5 +108,8 @@ class TestCombat(EvenniaTest):
         self.assertEqual(chandler.db.tilt, 0)
         # TODO Test the deferred value after all the actions have been added
 
+    def resolve_full_round_combat(self):
+        chandler = self.get_handler()
+
     def test_nosurrender(self):
         chandler = self.get_handler

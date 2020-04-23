@@ -26,6 +26,7 @@ class Tilt(DefaultScript):
 
     key = "TiltHandler"
     persistent = True
+    interval = 15
 
     def at_start(self):
         """
@@ -36,6 +37,14 @@ class Tilt(DefaultScript):
         self.db.wills = {}
         self.db.actions = []
 
+    def at_repeat(self):
+        if len(self.db.wills)<2:
+            self.stop()
+        self._sort_actions()
+        for character in self.db.wills.keys():
+            self._queue_actions(character)
+
+
     def at_stop(self):
         """
         Cleans up the script
@@ -44,11 +53,13 @@ class Tilt(DefaultScript):
         for character in characters:
             self.remove_character(character)
 
-    def add_character(self, character):
+    def add_character(self, character, target=None):
         """
         A new character has joined the battle
         """
         character.ndb.tilt_handler = self
+        if not character.ndb.target:
+            character.ndb.target = target
         self.db.starting_wills.update({character: character.db.will})
         self.db.wills.update({character: character.db.will})
         return True
@@ -59,6 +70,8 @@ class Tilt(DefaultScript):
         """
         del character.ndb.tilt_handler
         del character.ndb.combat_round_actions
+        del character.ndb.target
+        del character.ndb.process_stack
         del self.db.starting_wills[character]
         del self.db.wills[character]
         if len(self.db.wills) < 2:
@@ -141,8 +154,12 @@ class Tilt(DefaultScript):
 
         self.db.tilt += tilt_damage
         self.db.wills.update({target: self.db.wills.get(target) - will_damage})
-
+        self.msg_all(f"Tilt: {self.db.tilt}")
         return True
+
+    def msg_all(self, msg):
+        for character in self.db.wills.keys():
+            character.msg(msg)
 
     def loss_by_tilt(self):
         characters = self.db.starting_wills.keys()
