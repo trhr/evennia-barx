@@ -8,8 +8,8 @@ class TestCombat(EvenniaTest):
 
     def setUp(self):
         super().setUp()
-        self.char1.db.will=100
-        self.char2.db.will=50
+        self.char1.db.will=500
+        self.char2.db.will=500
 
     def get_handler(self):
         chandler = create_script(Tilt)
@@ -42,7 +42,7 @@ class TestCombat(EvenniaTest):
 
     def test_victory_by_tilt(self):
         chandler = self.get_handler()
-        chandler.db.tilt[self.char1]=250
+        chandler.db.tilt[self.char1]=100000
         chandler.loss_by_tilt()
         self.assertIsNone(self.char1.ndb.tilt_handler)
 
@@ -102,7 +102,6 @@ class TestCombat(EvenniaTest):
 
     @patch("typeclasses.combat.handler.delay", mockdelay)
     def test_full_round_combat(self):
-        print("Testing combat lull")
         chandler = self.get_handler()
         self.assertEqual(self.char1.ndb.combat_round_actions, [])
         chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=1, keyframes=1000)
@@ -122,4 +121,22 @@ class TestCombat(EvenniaTest):
         chandler.remove_character(self.char1)
         self.assertIsNone(self.char1.ndb.tilt_handler)
         self.assertIsNone(self.char2.ndb.tilt_handler)
+
+    def test_calc_severity(self):
+        chandler = self.get_handler()
+        damage = chandler._calc_injury_damage_modifier(100, .1)
+        self.assertEquals(damage, 90)
+        damage = chandler._calc_injury_damage_modifier(100, .4)
+        self.assertEquals(damage, 60)
+        damage = chandler._calc_injury_damage_modifier(100, .8)
+        self.assertEquals(damage, 20)
+        damage = chandler._calc_injury_damage_modifier(1000, .5)
+        self.assertEquals(damage, 500)
+
+    def test_injury_effect(self):
+        chandler = self.get_handler()
+        chandler.cause_injury(self.char1, location="right_arm", severity=.1)
+        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=100, keyframes=1000)
+        chandler._process_action()
+        self.assertNotEqual(chandler.get_tilt(self.char1), -100)
 

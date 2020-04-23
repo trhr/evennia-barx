@@ -165,6 +165,5 @@ class Object(DefaultObject):
     def test_method(self):
         pass
 
-
 class Bones(Object):
     pass

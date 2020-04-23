@@ -167,10 +167,10 @@ class Tilt(DefaultScript):
         tilt_damage = action.get("tilt_damage", 0)
         will_damage = action.get("will_damage", 0)
 
-        self.db.tilt.update({target: self.db.tilt.get(target) + tilt_damage})
-        self.db.tilt.update({character: self.db.tilt.get(character) - tilt_damage})
-
-        self.db.wills.update({target: self.db.wills.get(target) - will_damage})
+        severity = self._check_injury_severity(character)
+        tilt_damage = self._calc_injury_damage_modifier(tilt_damage, severity)
+        self._deal_tilt_damage(character, target, tilt_damage)
+        self._deal_will_damage(character, target, will_damage)
 
         effect_str = ""
         if tilt_damage:
@@ -185,7 +185,7 @@ class Tilt(DefaultScript):
 
     def msg_all(self, msg):
         for character in self.db.wills.keys():
-            character.full_width_msg(f"|[200|w{msg}|n")
+            character.msg(f"|[200|w{msg}|n", fullwidth=True)
 
     def loss_by_tilt(self):
         characters = self.db.starting_wills.keys()
@@ -240,3 +240,23 @@ class Tilt(DefaultScript):
         for action in character.ndb.combat_round_actions:
             total += action.get("keyframes", 1000)
         return total
+
+    def _deal_tilt_damage(self, character, target, damage):
+        self.db.tilt.update({target: self.db.tilt.get(target) + damage})
+        self.db.tilt.update({character: self.db.tilt.get(character) - damage})
+
+    def _deal_will_damage(self, character, target, damage):
+        self.db.wills.update({target: self.db.wills.get(target) - damage})
+
+    def _check_injury_severity(self, character):
+        severity = 0
+        if character.db.injuries:
+            severity += character.db.injuries.get("right_arm", 0)
+            severity += round(character.db.injuries.get("left_arm", 0)/2)
+        return severity
+
+    def _calc_injury_damage_modifier(self, damage, severity=0):
+        if damage and severity:
+            return round(damage-(damage*severity))
+        else:
+            return damage

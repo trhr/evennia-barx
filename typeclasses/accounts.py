@@ -94,7 +94,6 @@ class Account(DefaultAccount):
 
     pass
 
-
 class Guest(DefaultGuest):
     """
     This class is used for guest logins. Unlike Accounts, Guests and their
