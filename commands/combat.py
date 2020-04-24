@@ -19,10 +19,15 @@ class Attack(Command):
 
     def func(self):
         if self.target:
-            tilt_handler = create_script(Tilt)
-            tilt_handler.add_character(self.caller, target=self.target)
-            tilt_handler.add_character(self.target, target=self.caller)
-            self.caller.location.msg_contents(f"{self.caller} has a bone to pick with {self.target}!")
+            if not self.caller.ndb.tilt_handler:
+                tilt_handler = create_script(Tilt)
+                tilt_handler.add_character(self.caller, target=self.target)
+                tilt_handler.add_character(self.target, target=self.caller)
+                self.caller.location.msg_contents(f"{self.caller} has a bone to pick with {self.target}!")
+            else:
+                self.caller.msg(f"You're already in combat with {self.caller.ndb.target}!")
+        else:
+            self.caller.msg("Who would you like to fight?")
 
 class Jab(Command):
     """
