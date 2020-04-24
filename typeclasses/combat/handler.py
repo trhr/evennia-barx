@@ -64,11 +64,11 @@ class Tilt(DefaultScript):
         A new character has joined the battle
         """
         character.ndb.tilt_handler = self
-        if not character.ndb.target:
+        if target:
             character.ndb.target = target
         self.db.starting_wills.update({character: character.db.will})
         self.db.wills.update({character: character.db.will})
-        self.db.tilt.update({character: 0})
+        self.db.tilt.update({character: self.get_tilt(character)})
         character.ndb.combat_round_actions = []
         return True
 
@@ -159,7 +159,7 @@ class Tilt(DefaultScript):
         for character in self.db.wills.keys():
             del character.ndb.process_stack
         self.db.actions = []
-        for character in self.db.wills.items():
+        for character in self.db.wills.keys():
             character.msg(f"|[102|w{self.db.summary}|n", fullwidth=True)
         self.db.summary = ""
         return True
@@ -236,7 +236,7 @@ class Tilt(DefaultScript):
             character.db.injuries.update({location: severity})
 
     def get_tilt(self, character):
-        return self.db.tilt.get(character)
+        return self.db.tilt.get(character, 0)
 
     def get_attackers(self, character):
         """
