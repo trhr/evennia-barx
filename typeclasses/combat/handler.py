@@ -94,7 +94,7 @@ class Tilt(DefaultScript):
         """
         self._sort_actions()
         existing_actions = self.db.actions
-        if not existing_actions:
+        if not existing_actions and not character.ndb.combat_round_actions:
             self.msg_all(f"{character} readies an attack.")
 
         if (self._get_total_keyframes(character) + kwargs.get("keyframes", 1000))/1000 > self.interval:

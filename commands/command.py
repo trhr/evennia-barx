@@ -159,7 +159,7 @@ class Punch(Command):
     def func(self):
         if self.caller.ndb.tilt_handler:
             self.caller.ndb.tilt_handler.add_action_to_stack(self.caller, self.caller.ndb.target, tilt_damage=5, keyframes=500)
-            self.caller.msg("[Added Punch to Stack]")
+            self.caller.msg("|[002|wAdded Punch to Stack|n", fullwidth=True)
         else:
             self.caller.msg("You're not in combat!")
 
@@ -172,7 +172,7 @@ class Jab(Command):
     def func(self):
         if self.caller.ndb.tilt_handler:
             self.caller.ndb.tilt_handler.add_action_to_stack(self.caller, self.caller.ndb.target, tilt_damage=1, keyframes=100)
-            self.caller.msg("[Added Jab to Stack]")
+            self.caller.msg("|[002|wAdded Jab to Stack|n", fullwidth=True)
         else:
             self.caller.msg("You're not in combat!")
 
@@ -185,7 +185,7 @@ class Haymaker(Command):
     def func(self):
         if self.caller.ndb.tilt_handler:
             self.caller.ndb.tilt_handler.add_action_to_stack(self.caller, self.caller.ndb.target, will_damage=5, keyframes=1000)
-            self.caller.msg("[Added Haymaker to Stack]")
+            self.caller.msg("|[002|wAdded Haymaker to Stack|n", fullwidth=True)
         else:
             self.caller.msg("You're not in combat!")
 
