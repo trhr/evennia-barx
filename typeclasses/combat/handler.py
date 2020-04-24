@@ -153,16 +153,15 @@ class Tilt(DefaultScript):
                     keyframes_in_queue += action.get("keyframes", 1000)
                 else: # Instant action
                     process_stack.append(self._process_action(action))
-            #character.ndb.process_stack = defer.DeferredList(process_stack)
-            #character.ndb.process_stack.addCallback(self._cleanup_round, character)
             character.ndb.process_stack = process_stack
 
     def _cleanup_round(self):
         for character in self.db.wills.keys():
             del character.ndb.process_stack
         self.db.actions = []
-        self.msg_all(self.db.summary, fullwidth=True)
-        self.db.summary=""
+        for character in self.db.wills.items():
+            character.msg(f"|[102|w{self.db.summary}|n", fullwidth=True)
+        self.db.summary = ""
         return True
 
     def _process_action(self, action=None):
@@ -206,7 +205,7 @@ class Tilt(DefaultScript):
     def msg_all(self, msg):
         for character in self.db.wills.keys():
             character.msg(f"|[200|w{msg}|n", fullwidth=True)
-        self.db.summary+=msg
+        self.db.summary += msg
 
     def loss_by_tilt(self):
         characters = self.db.starting_wills.keys()
