@@ -1,6 +1,7 @@
 from typeclasses.scripts import DefaultScript
 from evennia.utils import delay
-from twisted.internet import defer
+from world.breeds.donkey_kong import statblock
+
 
 class Tilt(DefaultScript):
     """
@@ -23,41 +24,39 @@ class Tilt(DefaultScript):
     - However, combat also regularly 'lulls,' either due to an injury, tiredness, or simply having nothing else to do.
 
     """
+
+
     def at_script_creation(self):
-        self.key = "TiltHandler"
-        self.persistent = True
-        self.interval = 15
-        self.start_delay = True
         self.repeats = 0
+        self.start_delay = True
+        self.interval = 15
+        self.persistent = True
+        self.key = "TiltHandler"
         self.db.tilt = {}
-        self.db.starting_wills = {}
-        self.db.wills = {}
         self.db.target = {}
         self.db.actions = []
-        self.db.summary = ""
 
     def at_start(self):
         """
         Sets up the script
         """
-        for character in self.db.wills.keys():
+        for character in self.db.tilt.keys():
             target = self.db.target.get(character, None)
             self.add_character(character, target)
+        self.db.summary = ""
 
     def at_repeat(self):
-        self._cleanup_round()
-        if len(self.db.wills) < 2:
+        if len(self.db.tilt) < 2:
             self.stop()
         self._sort_actions()
         self._queue_actions()
-        self.db.actions = []
-        self.msg_all("You sense a lull in the combat...")
+        self._cleanup_round()
 
     def at_stop(self):
         """
         Cleans up the script
         """
-        characters = self.db.wills.keys()
+        characters = self.db.tilt.keys()
         for character in characters:
             character.msg(f"|[102|w{self.db.summary}|n", fullwidth=True)
             self.remove_character(character)
@@ -70,8 +69,6 @@ class Tilt(DefaultScript):
         if target:
             character.ndb.target = target
             self.db.target.update({character: target})
-        self.db.starting_wills.update({character: character.db.will})
-        self.db.wills.update({character: character.db.will})
         self.db.tilt.update({character: self.get_tilt(character)})
         character.ndb.combat_round_actions = []
         return True
@@ -84,9 +81,8 @@ class Tilt(DefaultScript):
         del character.ndb.combat_round_actions
         del character.ndb.target
         del character.ndb.process_stack
-        del self.db.starting_wills[character]
-        del self.db.wills[character]
-        if len(self.db.wills) < 2:
+        del self.db.tilt[character]
+        if len(self.db.tilt) < 2:
             self.stop()
 
     def add_action_to_stack(self, character, target, **kwargs):
@@ -94,11 +90,12 @@ class Tilt(DefaultScript):
         Queues an action into the action dict.
 
         Kwargs:
-           tilt_damage
-           will_damage
-           keyframes
+           startup
+           totalframes
+           basedamage
+           shieldlag
+           invulnerability
         """
-        self._sort_actions()
         existing_actions = self.db.actions
         if not existing_actions and not character.ndb.combat_round_actions:
             if self.time_until_next_repeat() < self.interval/3:
@@ -106,9 +103,7 @@ class Tilt(DefaultScript):
                 return False
             self.msg_all(f"|[200|w{character} readies an attack.|n")
 
-        if (self._get_total_keyframes(character) + kwargs.get("keyframes", 1000))/1000 > self.interval:
-            character.msg("You can't be sure a combo that long will work...", fullwidth=True)
-            return False
+
 
         action_dict = { 
                 "character": character,
@@ -117,12 +112,26 @@ class Tilt(DefaultScript):
 
         action_dict.update(kwargs)
 
+        if self._keyframes_to_seconds(self._get_character_total_keyframes(character) + self._get_keyframes(action_dict)) > self.interval:
+            character.msg("You can't be sure a combo that long will work...", fullwidth=True)
+            return False
+
         existing_actions.append(action_dict)
 
         if len(self.db.actions) > len(existing_actions)-1:
             return True
         else:
             return False
+
+    def _cleanup_round(self):
+        for character in self.db.tilt.keys():
+            del character.ndb.process_stack
+            character.ndb.combat_round_actions=[]
+        self.db.actions = []
+        for character in self.db.tilt.keys():
+            character.msg(f"|[102|w{self.db.summary}|n", fullwidth=True)
+        self.db.summary = ""
+        return True
 
     def _sort_actions(self):
         """
@@ -131,42 +140,38 @@ class Tilt(DefaultScript):
         actions = self.db.actions
         while len(self.db.actions) > 0:
             action = self._get_next_action()
-            if not action.get("character").ndb.combat_round_actions:
-                action.get("character").ndb.combat_round_actions = []
             action.get("character").ndb.combat_round_actions.append(action)
 
     def _queue_actions(self):
         """
             Queue character actions with delays.
         """
-        # print(f"Queuing actions for {character}")
-        for character in self.db.wills.keys():
+
+        for character in self.db.tilt.keys():
             process_stack = []
-            keyframes_in_queue = 0
+            keyframes_in_queue = self._get_character_total_keyframes(character)
+            print(f"[{keyframes_in_queue} kf in q]")
             action: dict
-            while len(character.ndb.combat_round_actions) > 0:
+
+            while character.ndb.combat_round_actions:
                 action = character.ndb.combat_round_actions.pop(0)
-                if action.get("keyframes") > 0:
+
+                if action.get("totalframes", 0) > 0:
                     process_stack.append(
                             delay(
-                                keyframes_in_queue/1000,
+                                keyframes_in_queue/60 + action.get("startup", 0),
                                 self._process_action,
                                 action
                             )
                     )
-                    keyframes_in_queue += action.get("keyframes", 1000)
+                    keyframes_in_queue += action.get("totalframes", 0)
                 else: # Instant action
                     process_stack.append(self._process_action(action))
+            #except (TypeError, ValueError):
+            #    pass
+
             character.ndb.process_stack = process_stack
 
-    def _cleanup_round(self):
-        for character in self.db.wills.keys():
-            del character.ndb.process_stack
-        self.db.actions = []
-        for character in self.db.wills.keys():
-            character.msg(f"|[102|w{self.db.summary}|n", fullwidth=True)
-        self.db.summary = ""
-        return True
 
     def _process_action(self, action=None):
         """
@@ -175,63 +180,56 @@ class Tilt(DefaultScript):
 
         if not action:
             action = self._get_next_action()
+
         character = action.get("character")
         target = action.get("target")
         attack_verb = action.get("attack_verb", "swing")
         weapon_noun = action.get("weapon_noun", "fist")
-        tilt_damage = action.get("tilt_damage", 0)
-        will_damage = action.get("will_damage", 0)
+        baseknockback = action.get("baseknockback", 0)
+        basedamage = action.get("basedamage", 0)
 
-        severity = self._check_injury_severity(character)
-        tilt_damage = self._calc_injury_damage_modifier(tilt_damage, severity)
-        tilt_damage = tilt_damage*(self._calc_tilt_advantage(character)/100)
-        self._deal_tilt_damage(character, target, tilt_damage)
-        self._deal_will_damage(character, target, will_damage)
+        #severity = self._check_injury_severity(character)
+        #tilt_damage = self._calc_injury_damage_modifier(tilt_damage, severity)
+        #tilt_damage = tilt_damage*(self._calc_tilt_advantage(character)/100)
+        freshness = 0
+        damage = self._calc_damage_modifiers(basedamage, freshness)
+        print(f"[{damage} dealt]")
+        self._deal_tilt_damage(character, target, damage)
 
         effect_str = ""
-        if tilt_damage:
-            effect_str += f"{character} feels the battle shift in their favor. "
-            if tilt_damage <= 3 and target.ndb.combat_round_actions:
-                if target.ndb.combat_round_actions[0].get("tilt_damage") > 3:
-                    target.ndb.combat_round_actions[0]["tilt_damage"] -= 1
-                    effect_str += f"{target} got beat to the punch! "
+#        if basedamage:
+#            effect_str += f"{character} feels the battle shift in their favor. "
+            #if basedamage <= 5 and target.ndb.combat_round_actions:
+               # if target.ndb.combat_round_actions[0].get("basedamage") > 3:
+               #     target.ndb.combat_round_actions[0]["basedamage"] -= 1
+               #     effect_str += f"{target} got beat to the punch! "
 
-        if will_damage > 0:
-            effect_str += f"{target} loses some of their will to fight! "
-        else:
-            effect_str += f"{target} feels emboldened by the battle! "
+#        if will_damage > 0:
+#            effect_str += f"{target} loses some of their will to fight! "
+#        else:
+#            effect_str += f"{target} feels emboldened by the battle! "
 
-        if will_damage >= 10 and target.ndb.combat_round_actions:
-            target.ndb.combat_round_actions.pop(0)
-            effect_str += f"Yowch!"
+#        if will_damage >= 10 and target.ndb.combat_round_actions:
+#            target.ndb.combat_round_actions.pop(0)
+#            effect_str += f"Yowch!"
 
         effect_str.strip()
         self.msg_all(f"{character} {attack_verb} a {weapon_noun} at {target}. {effect_str}")
-        self.loss_by_tilt()
+        knockback = self.calc_knockback(self.get_tilt(target), basedamage, baseknockback, target)
+        print(f"[{knockback}] knockback")
+        self.loss_by_tilt(target, knockback)
         return True
 
     def msg_all(self, msg):
-        for character in self.db.wills.keys():
-            character.msg(f"|[200|w{msg}|n", fullwidth=True)
-        self.db.summary += msg
+        if self.db.tilt:
+            for character in self.db.tilt.keys():
+                character.msg(f"|[200|w{msg}|n", fullwidth=True)
+        self.db.summary = f"{self.db.summary} {msg}"
 
-    def loss_by_tilt(self):
-        characters = self.db.starting_wills.keys()
-        blocked = False
-        for character in characters:
-            try:
-                if self.get_tilt(character) > self.db.wills.get(character):
-                    attackers = self.get_attackers(character)
-                    for attacker in attackers:
-                        if attacker.db.noflee:
-                            blocked = True
-                            self.msg_all(f"{character} tries to flee but is blocked by {attacker}!")
-                            break
-                    if not blocked:
-                        self.msg_all(f"{character} has fled!")
-                        self.remove_character(character)
-            except AttributeError:
-                pass
+    def loss_by_tilt(self, character, knockback):
+        if knockback > character.db.statblock.get("knockback_sustained"):
+            self.msg_all(f"{character} has been knocked out!")
+            self.remove_character(character)
 
     def cause_injury(self, character, **kwargs):
         location = kwargs.get("location", None)
@@ -251,30 +249,32 @@ class Tilt(DefaultScript):
         Gets the list of characters targeting a character
         """
         attackers=[]
-        for participant in self.db.wills.keys():
+        for participant in self.db.tilt.keys():
             if participant.ndb.target == character:
                 attackers.append(participant)
         return attackers
 
     def _get_next_action(self):
-        "Remove the next action from the queue and return it"
+        """Remove the next action from the queue and return it"""
         return self.db.actions.pop(0)
 
-    def _keyframes_to_seconds(self, action):
-        return action.get("keyframes", 1000)/1000
+    def _keyframes_to_seconds(self, keyframes):
+        return keyframes/60
 
-    def _get_total_keyframes(self, character):
+    def _get_character_total_keyframes(self, character):
         total = 0
         for action in character.ndb.combat_round_actions:
-            total += action.get("keyframes", 1000)
+            total += action.get("totalframes", 60)
         return total
+
+    def _get_keyframes(self, action):
+        return action.get("totalframes", 60)
 
     def _deal_tilt_damage(self, character, target, damage):
         self.db.tilt.update({target: self.db.tilt.get(target) + damage})
-        self.db.tilt.update({character: self.db.tilt.get(character) - damage})
 
-    def _deal_will_damage(self, character, target, damage):
-        self.db.wills.update({target: self.db.wills.get(target) - damage})
+#    def _deal_will_damage(self, character, target, damage):
+#        self.db.wills.update({target: self.db.wills.get(target) - damage})
 
     def _check_injury_severity(self, character):
         severity = 0
@@ -293,3 +293,12 @@ class Tilt(DefaultScript):
         tilt = self.get_tilt(character)
         import math
         return 1/(1+math.exp(tilt/100-0.22314))*90+5
+
+    def _calc_damage_modifiers(self, basedamage, freshness):
+        return basedamage
+
+    def calc_knockback(self, p, d, b, character):
+        w = 100
+        s = 1.0
+        r = 1
+        return ((((((p/10)+((p*d)/20))*w*1.4)+18)*s)+b)*r

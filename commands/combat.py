@@ -1,6 +1,22 @@
+"""
+Startup: The amount of frames it takes to hit
+TotalFrames: The total duration of a move before the character can begin a new move
+BaseDamage: Damage dealt without 1v1 damage multiplier or move staleness/freshness bonus
+Shieldlag: The unique amount of hitlag (freeze frames) when hitting a shield.
+Invulnerability: Character cannot be hit by an attack on these frames
+"""
+
 from commands.command import Command
 from evennia import create_script
 from typeclasses.combat.handler import Tilt
+from world.breeds.donkey_kong import statblock
+
+def _is_valid_attack(character):
+    if not character.ndb.tilt_handler:
+        character.msg("You're not in combat!")
+        return False
+    else:
+        character.msg("|[002|wAttack queued|n")
 
 class Attack(Command):
     """
@@ -31,52 +47,103 @@ class Attack(Command):
 
 class Jab(Command):
     """
-    Throw a jab!
+    Jabs can be executed up to three times in a row.
     """
+
     key = "jab"
 
     def func(self):
-        if self.caller.ndb.tilt_handler:
-            self.caller.ndb.tilt_handler.add_action_to_stack(self.caller, self.caller.ndb.target, tilt_damage=1, keyframes=400) # 2.5 DPS
-            self.caller.msg("|[002|wAdded Jab to Stack|n", fullwidth=True)
-        else:
-            self.caller.msg("You're not in combat!")
+        if _is_valid_attack(self.caller):
+            self.caller.ndb.tilt_handler.add_action_to_stack(
+                self.caller,
+                self.caller.ndb.target,
+                statblock.get("attacks").get("jab1")
+            )
 
 class Punch(Command):
     """
-    Throw a punch!
+    A good middling attack.
     """
     key = "punch"
 
     def func(self):
-        if self.caller.ndb.tilt_handler:
-            self.caller.ndb.tilt_handler.add_action_to_stack(self.caller, self.caller.ndb.target, tilt_damage=5, keyframes=1000) # 5.0 DPS
-            self.caller.msg("|[002|wAdded Punch to Stack|n", fullwidth=True)
-        else:
-            self.caller.msg("You're not in combat!")
+        if _is_valid_attack(self.caller):
+            self.caller.ndb.tilt_handler.add_action_to_stack(
+                self.caller,
+                self.caller.ndb.target,
+                statblock.get("attacks").get("punch")
+            )
+
 
 class Haymaker(Command):
     """
-    Throw a punch!
+    A good middling attack.
     """
     key = "haymaker"
 
     def func(self):
-        if self.caller.ndb.tilt_handler:
-            self.caller.ndb.tilt_handler.add_action_to_stack(self.caller, self.caller.ndb.target, will_damage=10, keyframes=1000) # 10.0 DPS
-            self.caller.msg("|[002|wAdded Haymaker to Stack|n", fullwidth=True)
-        else:
-            self.caller.msg("You're not in combat!")
+        if _is_valid_attack(self.caller):
+            self.caller.ndb.tilt_handler.add_action_to_stack(
+                self.caller,
+                self.caller.ndb.target,
+                statblock.get("attacks").get("haymaker")
+            )
 
-class Guard(Command):
+class Special(Command):
     """
-    Into a guard!
+    Its different for every breed!
     """
-    key = "guard"
+    key = "special"
 
     def func(self):
-        if self.caller.ndb.tilt_handler:
-            self.caller.ndb.tilt_handler.add_action_to_stack(self.caller, self.caller, will_damage=-6, keyframes=333) # 18 HPS
-            self.caller.msg("|[002|wAdded Guard to Stack|n", fullwidth=True)
-        else:
-            self.caller.msg("You're not in combat!")
+        if _is_valid_attack(self.caller):
+            self.caller.ndb.tilt_handler.add_action_to_stack(
+                self.caller,
+                self.caller.ndb.target,
+                statblock.get("attacks").get("special")
+            )
+
+class Stun(Command):
+    """
+    Attack and stun.
+    """
+    key = "stun"
+
+    def func(self):
+        if _is_valid_attack(self.caller):
+            self.caller.ndb.tilt_handler.add_action_to_stack(
+                self.caller,
+                self.caller.ndb.target,
+                statblock.get("attacks").get("stun")
+            )
+
+class Grab(Command):
+    """
+    Grab your opponent and don't let go.
+    """
+    key = "grab"
+
+    def func(self):
+        if _is_valid_attack(self.caller):
+            self.caller.ndb.tilt_handler.add_action_to_stack(
+                self.caller,
+                self.caller.ndb.target,
+                statblock.get("attacks").get("grab")
+            )
+
+
+class Dodge(Command):
+    """
+    Move out of the way.
+    """
+    key = "dodge"
+
+    def func(self):
+        if _is_valid_attack(self.caller):
+            self.caller.ndb.tilt_handler.add_action_to_stack(
+                self.caller,
+                self.caller.ndb.target,
+                statblock.get("attacks").get("dodge")
+            )
+
+

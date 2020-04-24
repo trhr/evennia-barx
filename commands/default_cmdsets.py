@@ -44,7 +44,10 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(combat.Punch())
         self.add(combat.Jab())
         self.add(combat.Haymaker())
-        self.add(combat.Guard())
+        self.add(combat.Grab())
+        self.add(combat.Special())
+        self.add(combat.Stun())
+        self.add(combat.Dodge())
 
 
 class AccountCmdSet(default_cmds.AccountCmdSet):
