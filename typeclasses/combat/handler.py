@@ -57,6 +57,7 @@ class Tilt(DefaultScript):
         """
         characters = self.db.wills.keys()
         for character in characters:
+            character.msg(f"|[102|w{self.db.summary}|n", fullwidth=True)
             self.remove_character(character)
 
     def add_character(self, character, target=None):
@@ -98,7 +99,7 @@ class Tilt(DefaultScript):
         existing_actions = self.db.actions
         if not existing_actions and not character.ndb.combat_round_actions:
             if self.time_until_next_repeat() < self.interval/3:
-                character.msg(f"It's too late for either player to start a flurry, wait until the next lull...",fullwidth=True)
+                character.msg(f"It's too late for either player to start a flurry. Wait until the next lull...", fullwidth=True)
                 return False
             self.msg_all(f"|[200|w{character} readies an attack.|n")
 
@@ -180,6 +181,7 @@ class Tilt(DefaultScript):
 
         severity = self._check_injury_severity(character)
         tilt_damage = self._calc_injury_damage_modifier(tilt_damage, severity)
+        tilt_damage = tilt_damage*(self._calc_tilt_advantage(character)/100)
         self._deal_tilt_damage(character, target, tilt_damage)
         self._deal_will_damage(character, target, will_damage)
 
@@ -280,3 +282,8 @@ class Tilt(DefaultScript):
             return round(damage-(damage*severity))
         else:
             return damage
+
+    def _calc_tilt_advantage(self, character):
+        tilt = self.get_tilt(character)
+        import math
+        return 1/(1+math.exp(tilt/100-0.22314))*90+5

@@ -38,7 +38,6 @@ class TestCombat(EvenniaTest):
         self.assertTrue(chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=5))
         self.assertTrue(chandler._process_action())
         self.assertNotEquals(chandler.get_tilt(self.char1), 0)
-        self.assertEquals(chandler.get_tilt(self.char2), 5)
 
     def test_victory_by_tilt(self):
         chandler = self.get_handler()
@@ -98,7 +97,7 @@ class TestCombat(EvenniaTest):
         self.assertEqual(len(self.char1.ndb.combat_round_actions), 2)
         self.assertEqual(len(self.char2.ndb.combat_round_actions), 2)
         chandler.at_repeat()
-        self.assertEqual(chandler.get_tilt(self.char1), 6)
+        self.assertAlmostEqual(chandler.get_tilt(self.char1), 2.0545,delta=.05)
 
     @patch("typeclasses.combat.handler.delay", mockdelay)
     def test_full_round_combat(self):
@@ -153,3 +152,30 @@ class TestCombat(EvenniaTest):
         chandler = self.get_handler()
         chandler._deal_will_damage(self.char1, self.char1, -5)
         self.assertEqual(chandler.db.wills.get(self.char1), 505)
+
+    def test_back_to_back_lulls(self):
+        chandler = self.get_handler()
+        chandler.at_repeat()
+        chandler.at_repeat()
+        #self.assertIsNone(self.char1.ndb.tilt_handler)
+
+    def test_tilt_advantage(self):
+        chandler = self.get_handler()
+        percentage = chandler._calc_tilt_advantage(self.char1)
+        self.assertAlmostEqual(percentage, 55, delta=.05)
+        chandler._deal_tilt_damage(self.char2, self.char1, 10)
+        percentage = chandler._calc_tilt_advantage(self.char1)
+        self.assertAlmostEqual(percentage, 52.767, delta=.05)
+        chandler._deal_tilt_damage(self.char2, self.char1, 10)
+        percentage = chandler._calc_tilt_advantage(self.char1)
+        self.assertAlmostEqual(percentage, 50.520, delta=.05)
+        chandler._deal_tilt_damage(self.char2, self.char1, 50)
+        percentage = chandler._calc_tilt_advantage(self.char1)
+        self.assertAlmostEqual(percentage, 39.469, delta=.05)
+        chandler._deal_tilt_damage(self.char2, self.char1, 50)
+        percentage = chandler._calc_tilt_advantage(self.char1)
+        self.assertAlmostEqual(percentage, 29.616, delta=.05)
+
+
+
+
