@@ -51,4 +51,4 @@ class Character(DefaultCharacter):
                 msg = f"$pad({msg}, {client_width_px},c,-)"
             except IndexError:
                 pass
-        super().msg(msg)
+        super().msg(msg, **kwargs)
