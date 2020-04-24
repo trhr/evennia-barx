@@ -165,5 +165,16 @@ class Object(DefaultObject):
     def test_method(self):
         pass
 
+    def msg(self, text=None, from_obj=None, session=None, options=None, **kwargs):
+        clean_kwargs = {}
+        for k, v in kwargs.items():
+            if v:
+                clean_kwargs[k] = v
+
+        if text:
+            clean_kwargs["text"] = text
+
+        super().msg(**clean_kwargs)
+
 class Bones(Object):
     pass

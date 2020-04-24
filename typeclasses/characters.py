@@ -43,12 +43,21 @@ class Character(DefaultCharacter):
         else:
             return "Someone"
 
-    def msg(self, msg, **kwargs):
+    def msg(self, text=None, from_obj=None, session=None, options=None, **kwargs):
+        clean_kwargs = {}
+        for k, v in kwargs.items():
+            if v:
+                clean_kwargs[k] = v
+
         if kwargs.get("fullwidth"):
             try:
                 client_width = self.sessions.all()[0].protocol_flags.get("SCREENWIDTH", {0:80})
                 client_width_px = client_width.get(0)
-                msg = f"$pad({msg}, {client_width_px},c,-)"
+                text = f"$pad({text}, {client_width_px},c,-)"
             except IndexError:
                 pass
-        super().msg(msg, **kwargs)
+
+        if text:
+            clean_kwargs["text"] = text
+
+        super().msg(**clean_kwargs)
