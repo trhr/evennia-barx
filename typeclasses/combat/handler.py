@@ -92,13 +92,18 @@ class Tilt(DefaultScript):
            will_damage
            keyframes
         """
-
+        self._sort_actions()
         existing_actions = self.db.actions
         if not existing_actions:
             self.msg_all(f"{character} readies an attack.")
+
+        if (self._get_total_keyframes(character) + kwargs.get("keyframes", 1000))/1000 > self.interval:
+            character.msg("You can't be sure a combo that long will work...", fullwidth=True)
+            return False
+
         action_dict = { 
-                "character" : character,
-                "target" : target,
+                "character": character,
+                "target": target,
                 }
 
         action_dict.update(kwargs)
@@ -112,7 +117,7 @@ class Tilt(DefaultScript):
 
     def _sort_actions(self):
         """
-        Sorts actions into two piles
+        Sorts actions into two piles nondestructively
         """
         actions = self.db.actions
         while len(self.db.actions) > 0:

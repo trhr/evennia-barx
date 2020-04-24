@@ -140,3 +140,12 @@ class TestCombat(EvenniaTest):
         chandler._process_action()
         self.assertNotEqual(chandler.get_tilt(self.char1), -100)
 
+    def test_too_many_attacks(self):
+        chandler = self.get_handler()
+        res = chandler.add_action_to_stack(self.char1,self.char2, keyframes=6000)
+        self.assertTrue(res)
+        res = chandler.add_action_to_stack(self.char1, self.char2, keyframes=6000)
+        self.assertTrue(res)
+        res = chandler.add_action_to_stack(self.char1, self.char2, keyframes=6000)
+        self.assertFalse(res)
+
