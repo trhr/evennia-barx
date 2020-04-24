@@ -111,7 +111,7 @@ class TestCombat(EvenniaTest):
         chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=8, keyframes=1000)
         chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=1, keyframes=1000)
         chandler.at_repeat()
-        self.assertEqual(chandler.get_tilt(self.char1), 9)
+        self.assertEqual(chandler.get_tilt(self.char1), 6)
         self.assertEqual(self.char1.ndb.combat_round_actions, [])
 
     def test_cleanup(self):

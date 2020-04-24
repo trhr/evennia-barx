@@ -183,6 +183,11 @@ class Tilt(DefaultScript):
         effect_str = ""
         if tilt_damage:
             effect_str += f"{character} feels the battle shift in their favor. "
+            if tilt_damage <= 3 and target.ndb.combat_round_actions:
+                if target.ndb.combat_round_actions[0].get("tilt_damage") > 3:
+                    target.ndb.combat_round_actions[0]["tilt_damage"] -= 1
+                    effect_str += f"{target} got beat to the punch! "
+
         if will_damage:
             effect_str += f"{target} loses some of their will to fight! "
         if will_damage >= 10 and target.ndb.combat_round_actions:
