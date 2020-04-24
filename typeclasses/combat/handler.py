@@ -95,7 +95,10 @@ class Tilt(DefaultScript):
         self._sort_actions()
         existing_actions = self.db.actions
         if not existing_actions and not character.ndb.combat_round_actions:
-            self.msg_all(f"{character} readies an attack.")
+            if self.time_until_next_repeat() < self.interval/3:
+                character.msg(f"It's too late for either player to start a flurry, wait until the next lull...",fullwidth=True)
+                return False
+            self.msg_all(f"|[200|w{character} readies an attack.|n")
 
         if (self._get_total_keyframes(character) + kwargs.get("keyframes", 1000))/1000 > self.interval:
             character.msg("You can't be sure a combo that long will work...", fullwidth=True)
@@ -181,9 +184,12 @@ class Tilt(DefaultScript):
         if tilt_damage:
             effect_str += f"{character} feels the battle shift in their favor. "
         if will_damage:
-            effect_str += f"{target} loses some of their will to fight!"
+            effect_str += f"{target} loses some of their will to fight! "
+        if will_damage >= 10 and target.ndb.combat_round_actions:
+            target.ndb.combat_round_actions.pop(0)
+            effect_str += f"Yowch!"
 
-
+        effect_str.strip()
         self.msg_all(f"{character} {attack_verb} a {weapon_noun} at {target}. {effect_str}")
         self.loss_by_tilt()
         return True
