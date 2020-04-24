@@ -33,6 +33,7 @@ class Tilt(DefaultScript):
         self.db.starting_wills = {}
         self.db.wills = {}
         self.db.actions = []
+        self.db.summary = ""
 
     def at_start(self):
         """
@@ -42,6 +43,7 @@ class Tilt(DefaultScript):
             self.add_character(character)
 
     def at_repeat(self):
+        self._cleanup_round()
         if len(self.db.wills) < 2:
             self.stop()
         self._sort_actions()
@@ -155,10 +157,11 @@ class Tilt(DefaultScript):
             #character.ndb.process_stack.addCallback(self._cleanup_round, character)
             character.ndb.process_stack = process_stack
 
-    def _cleanup_round(self, character):
-        del character.ndb.process_stack
+    def _cleanup_round(self):
+        for character in self.db.wills.keys():
+            del character.ndb.process_stack
         self.db.actions = []
-        self.msg_all(f"There is a lull in the combat...")
+
         return True
 
     def _process_action(self, action=None):
