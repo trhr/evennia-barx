@@ -142,10 +142,14 @@ class TestCombat(EvenniaTest):
 
     def test_too_many_attacks(self):
         chandler = self.get_handler()
-        res = chandler.add_action_to_stack(self.char1,self.char2, keyframes=6000)
+        res = chandler.add_action_to_stack(self.char1, self.char2, keyframes=6000)
         self.assertTrue(res)
         res = chandler.add_action_to_stack(self.char1, self.char2, keyframes=6000)
         self.assertTrue(res)
         res = chandler.add_action_to_stack(self.char1, self.char2, keyframes=6000)
         self.assertFalse(res)
 
+    def test_negative_will_damage(self):
+        chandler = self.get_handler()
+        chandler._deal_will_damage(self.char1, self.char1, -5)
+        self.assertEqual(chandler.db.wills.get(self.char1), 505)
