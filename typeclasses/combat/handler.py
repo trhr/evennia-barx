@@ -32,6 +32,7 @@ class Tilt(DefaultScript):
         self.db.tilt = {}
         self.db.starting_wills = {}
         self.db.wills = {}
+        self.db.target = {}
         self.db.actions = []
         self.db.summary = ""
 
@@ -40,7 +41,8 @@ class Tilt(DefaultScript):
         Sets up the script
         """
         for character in self.db.wills.keys():
-            self.add_character(character)
+            target = self.db.target.get(character, None)
+            self.add_character(character, target)
 
     def at_repeat(self):
         self._cleanup_round()
@@ -67,6 +69,7 @@ class Tilt(DefaultScript):
         character.ndb.tilt_handler = self
         if target:
             character.ndb.target = target
+            self.db.target.update({character: target})
         self.db.starting_wills.update({character: character.db.will})
         self.db.wills.update({character: character.db.will})
         self.db.tilt.update({character: self.get_tilt(character)})
@@ -193,8 +196,11 @@ class Tilt(DefaultScript):
                     target.ndb.combat_round_actions[0]["tilt_damage"] -= 1
                     effect_str += f"{target} got beat to the punch! "
 
-        if will_damage:
+        if will_damage > 0:
             effect_str += f"{target} loses some of their will to fight! "
+        else:
+            effect_str += f"{target} feels emboldened by the battle! "
+
         if will_damage >= 10 and target.ndb.combat_round_actions:
             target.ndb.combat_round_actions.pop(0)
             effect_str += f"Yowch!"

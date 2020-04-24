@@ -72,6 +72,7 @@ class Guard(Command):
     """
     Into a guard!
     """
+    key = "guard"
 
     def func(self):
         if self.caller.ndb.tilt_handler:
