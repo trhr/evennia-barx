@@ -161,7 +161,8 @@ class Tilt(DefaultScript):
         for character in self.db.wills.keys():
             del character.ndb.process_stack
         self.db.actions = []
-
+        self.msg_all(self.db.summary, fullwidth=True)
+        self.db.summary=""
         return True
 
     def _process_action(self, action=None):
@@ -205,6 +206,7 @@ class Tilt(DefaultScript):
     def msg_all(self, msg):
         for character in self.db.wills.keys():
             character.msg(f"|[200|w{msg}|n", fullwidth=True)
+        self.db.summary+=msg
 
     def loss_by_tilt(self):
         characters = self.db.starting_wills.keys()
