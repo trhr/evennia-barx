@@ -71,6 +71,8 @@ class Tilt(DefaultScript):
             self.db.target.update({character: target})
         self.db.tilt.update({character: self.get_tilt(character)})
         character.ndb.combat_round_actions = []
+        character.ndb.battle_results = ""
+
         return True
 
     def remove_character(self, character):
@@ -129,6 +131,7 @@ class Tilt(DefaultScript):
         for character in self.db.tilt.keys():
             del character.ndb.process_stack
             character.ndb.combat_round_actions=[]
+            character.ndb.battle_results = ""
         self.db.actions = []
         for character in self.db.tilt.keys():
             character.msg(f"|[102|w{self.db.summary}|n", fullwidth=True)
@@ -216,7 +219,8 @@ class Tilt(DefaultScript):
 #            effect_str += f"Yowch!"
 
         effect_str.strip()
-        self.msg_all(f"{character} {attack_verb} a {weapon_noun} at {target}. {effect_str}")
+        #self.msg_all(f"{character} {attack_verb} a {weapon_noun} at {target}. {effect_str}")
+        character.ndb.battle_results += self._add_to_key_summary(action)
         knockback = self.calc_knockback(self.get_tilt(target), basedamage, baseknockback, target)
         print(f"[{knockback}] knockback")
         self.loss_by_tilt(target, knockback)
@@ -310,7 +314,20 @@ class Tilt(DefaultScript):
         ||||HAYMAKER||||
         """
         totalframes = action.get("totalframes")
-        return f"$pad({action.get('key')},{totalframes},c,|[200|w||)|n"
+        return f"$pad({action.get('key')},{totalframes},c,|[553|=k||)|n"
 
     def show_battle_summary(self):
-        pass
+        for character in self.db.tilt:
+            header_str = f"|[200|w|/"\
+            "]]]]]]]]]]]]]]]]]]]]]]]]]]COMBAT]]]]]]]]]]]]]|/" \
+            "         ]]]]]]]]]]]]]]]]]RESULT]]]]]]]]]]]]]]|/" \
+            "                  ]]]]]]]]SCREEN]]]]]]]]]]]]]]|/" \
+            "|/"
+            char_str = "|[000|305|/"\
+            f"YOU:|-{character.ndb.battle_results}" \
+            "|/"
+            targ_str = "|[000|135"\
+            f"THEM:|-{character.ndb.target.ndb.battle_results}" \
+            "|/"
+
+            character.msg(f"{header_str}{char_str}{targ_str}")
