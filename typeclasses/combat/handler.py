@@ -45,7 +45,8 @@ class Tilt(DefaultScript):
             self.add_character(character, target)
 
     def at_repeat(self):
-        self.msg_all("|[520|004|-THE SURGE IS ON!")
+        self.msg_all("|[520|004]]]]]]]  T H E   S U R G E   I S   O N   ]]]]]")
+
         if len(self.db.tilt) < 2:
             self.stop()
         self._sort_actions()
@@ -229,7 +230,7 @@ class Tilt(DefaultScript):
     def msg_all(self, msg):
         if self.db.tilt:
             for character in self.db.tilt.keys():
-                character.msg(f"|[200|w{msg}|n", fullwidth=True)
+                character.msg(f"|[200|w{msg}|n")
 
     def loss_by_tilt(self, character, knockback):
         if knockback > character.db.statblock.get("knockback_sustained"):
@@ -321,16 +322,18 @@ class Tilt(DefaultScript):
     def show_battle_summary(self):
         for character in self.db.tilt:
             header_str = f"|[200|w|/"\
-            "]]]]]]]]]]]]]]]]]]]]]]]]]]COMBAT]]]]]]]]]]]]]]|/" \
-            "         ]]]]]]]]]]]]]]]]]RESULT]]]]]]]]]]]]]]|/" \
-            "                  ]]]]]]]]SCREEN]]]]]]]]]]]]]]|/"
+            "]]]]]]]]]]]]]]]]]]]]]   D O G   F I G H T  ]]|/" \
+            "     ]]]]]]]]]]]]]]]]]]]]]  R E S U L T S  ]]|/"
+
             char_str = "|[000|305|/"\
             f"YOU:|-{character.ndb.battle_results}" \
             "|/"
+
             targ_str = "|[000|135"\
             f"THEM:|-{character.ndb.target.ndb.battle_results}" \
             "|/"
-            footer_str = f"|[200|w|/"\
-            "]]]]]]]]]]]]]]]]]]]]]]]]]]COMBAT]]]]]]]]]]]]]]|/"
+
+            footer_str = f"|[110|w|/"\
+            "]]]]    A   L U L L   I N   C O M B A T   ]]]]|/"
 
             character.msg(f"{header_str}{char_str}{targ_str}{footer_str}")
