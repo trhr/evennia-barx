@@ -302,3 +302,13 @@ class Tilt(DefaultScript):
         s = 1.0
         r = 1
         return ((((((p/10)+((p*d)/20))*w*1.4)+18)*s)+b)*r
+
+    def _add_to_key_summary(self, action):
+        """
+        ||||HAYMAKER||||
+        """
+        totalframes = action.get("totalframes")
+        return f"$pad({action.get('key')},{totalframes},c,|[200|w||)|n"
+
+    def show_battle_summary(self):
+        pass

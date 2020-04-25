@@ -32,6 +32,12 @@ class TestCombat(EvenniaTest):
         chandler.add_character(self.char2)
         self.assertIsNotNone(self.char1.ndb.tilt_handler)
 
+    def test_target(self):
+        chandler = create_script(Tilt)
+        chandler.add_character(self.char1, target=self.char2)
+        chandler.add_character(self.char2, target=self.char1)
+        self.assertEqual(self.char2.ndb.target, self.char1)
+
     def test_tilt_exists(self):
         chandler = self.get_handler()
         self.assertEquals(chandler.get_tilt(self.char1), 0)
@@ -99,19 +105,20 @@ class TestCombat(EvenniaTest):
         chandler.at_repeat()
         self.assertAlmostEqual(chandler.get_tilt(self.char2), 16, delta=.05)
 
-#    @patch("typeclasses.combat.handler.delay", mockdelay)
-#    def test_full_round_combat(self):
-#        chandler = self.get_handler()
-#        self.assertEqual(self.char1.ndb.combat_round_actions, [])
-#        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=1, totalframes=1000)
-#        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=2, totalframes=1000)
-#        chandler.add_action_to_stack(self.char1, self.char2, tilt_damage=3, totalframes=1000)
-#        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=6, totalframes=1000)
-#        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=8, totalframes=1000)
-#        chandler.add_action_to_stack(self.char2, self.char1, tilt_damage=1, totalframes=1000)
-#        chandler.at_repeat()
-#        self.assertNotEqual(chandler.get_tilt(self.char1), 0)
-#        self.assertEqual(self.char1.ndb.combat_round_actions, [])
+    @patch("typeclasses.combat.handler.delay", mockdelay)
+    def test_full_round_combat(self):
+        chandler = self.get_handler()
+        self.assertEqual(self.char1.ndb.combat_round_actions, [])
+        chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+        chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+        chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+        chandler.add_action_to_stack(self.char2, self.char1, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+        chandler.add_action_to_stack(self.char2, self.char1, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+        chandler.add_action_to_stack(self.char2, self.char1, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+        self.assertEqual(len(chandler.db.actions), 6)
+        chandler.at_repeat()
+        self.assertNotEqual(chandler.get_tilt(self.char1), 0)
+        self.assertEqual(self.char1.ndb.combat_round_actions, [])
 
     def test_cleanup(self):
         chandler = self.get_handler()

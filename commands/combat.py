@@ -57,7 +57,7 @@ class Jab(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                statblock.get("attacks").get("jab1")
+                **statblock.get("attacks").get("jab1")
             )
 
 class Punch(Command):
@@ -71,7 +71,7 @@ class Punch(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                statblock.get("attacks").get("punch")
+                **statblock.get("attacks").get("punch")
             )
 
 
@@ -86,7 +86,7 @@ class Haymaker(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                statblock.get("attacks").get("haymaker")
+                **statblock.get("attacks").get("haymaker")
             )
 
 class Special(Command):
@@ -100,7 +100,7 @@ class Special(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                statblock.get("attacks").get("special")
+                **statblock.get("attacks").get("special")
             )
 
 class Stun(Command):
@@ -114,7 +114,7 @@ class Stun(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                statblock.get("attacks").get("stun")
+                **statblock.get("attacks").get("stun")
             )
 
 class Grab(Command):
@@ -128,7 +128,7 @@ class Grab(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                statblock.get("attacks").get("grab")
+                **statblock.get("attacks").get("grab")
             )
 
 
@@ -143,7 +143,7 @@ class Dodge(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                statblock.get("attacks").get("dodge")
+                **statblock.get("attacks").get("dodge")
             )
 
 
