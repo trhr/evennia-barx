@@ -58,7 +58,6 @@ class Tilt(DefaultScript):
         self.show_battle_summary()
         characters = self.db.tilt.keys()
         for character in characters:
-            character.msg(f"|[102|w{self.db.summary}|n", fullwidth=True)
             self.remove_character(character)
 
     def add_character(self, character, target=None):
