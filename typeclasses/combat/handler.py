@@ -121,7 +121,7 @@ class Tilt(DefaultScript):
             return False
 
         existing_actions.append(action_dict)
-        print(existing_actions)
+
         if len(self.db.actions) > len(existing_actions)-1:
             return True
         else:
@@ -138,43 +138,39 @@ class Tilt(DefaultScript):
         return True
 
     def _sort_actions(self):
-        """
-        Sorts actions into two piles nondestructively
-        """
-        actions = self.db.actions
-        while len(self.db.actions) > 0:
+        """Sorts actions into two piles"""
+        while self.db.actions:
             action = self._get_next_action()
             action.get("character").ndb.combat_round_actions.append(action)
 
     def _queue_actions(self):
-        """
-            Queue character actions with delays.
-        """
+        """Queue character actions with delays."""
 
         for character in self.db.tilt.keys():
-            process_stack = []
-            keyframes_in_queue = self._get_character_total_keyframes(character)
-            print(f"[{keyframes_in_queue} kf in q]")
-            action: dict
+            keyframes_in_queue = 0
 
             while character.ndb.combat_round_actions:
                 action = character.ndb.combat_round_actions.pop(0)
+                startup = action.get("startup", 0)
+                totalframes = action.get("totalframes", 0)
+                invuln = action.get("invulnerability", 0)
+                key = action.get('key', "")
 
-                if action.get("totalframes", 0) > 0:
-                    process_stack.append(
-                            delay(
-                                keyframes_in_queue/60 + action.get("startup", 0),
-                                self._process_action,
-                                action
-                            )
-                    )
-                    keyframes_in_queue += action.get("totalframes", 0)
-                else: # Instant action
-                    process_stack.append(self._process_action(action))
-            #except (TypeError, ValueError):
-            #    pass
+                delay(
+                    self._keyframes_to_seconds(keyframes_in_queue) + startup,
+                    self._process_action,
+                    action
+                )
+                keyframes_in_queue += totalframes
 
-            character.ndb.process_stack = process_stack
+                for i in range(0, startup):
+                    character.ndb.battle_results += "."
+                for i in range(startup, max(invuln)):
+                    character.ndb.battle_results += "XX"
+
+                character.ndb.battle_results += f"$pad( {key} ,{totalframes-max(invuln)-len(key)-2},c,|[553|=k||) |n"
+
+
 
 
     def _process_action(self, action=None):
@@ -219,7 +215,7 @@ class Tilt(DefaultScript):
 
         effect_str.strip()
         #self.msg_all(f"{character} {attack_verb} a {weapon_noun} at {target}. {effect_str}")
-        character.ndb.battle_results += self._add_to_key_summary(action)
+        #character.ndb.battle_results += self._add_to_key_summary(action)
         knockback = self.calc_knockback(self.get_tilt(target), basedamage, baseknockback, target)
         print(f"[{knockback}] knockback")
         self.loss_by_tilt(target, knockback)
@@ -270,6 +266,9 @@ class Tilt(DefaultScript):
         for action in character.ndb.combat_round_actions:
             total += action.get("totalframes", 60)
         return total
+
+    def _get_character_queued_keyframes(self, character):
+        pass
 
     def _get_keyframes(self, action):
         return action.get("totalframes", 60)
