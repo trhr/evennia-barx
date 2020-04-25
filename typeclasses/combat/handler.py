@@ -43,7 +43,6 @@ class Tilt(DefaultScript):
         for character in self.db.tilt.keys():
             target = self.db.target.get(character, None)
             self.add_character(character, target)
-        self.db.summary = ""
 
     def at_repeat(self):
         if len(self.db.tilt) < 2:
@@ -56,6 +55,7 @@ class Tilt(DefaultScript):
         """
         Cleans up the script
         """
+        self.show_battle_summary()
         characters = self.db.tilt.keys()
         for character in characters:
             character.msg(f"|[102|w{self.db.summary}|n", fullwidth=True)
@@ -128,14 +128,13 @@ class Tilt(DefaultScript):
             return False
 
     def _cleanup_round(self):
+        self.show_battle_summary()
         for character in self.db.tilt.keys():
             del character.ndb.process_stack
             character.ndb.combat_round_actions=[]
             character.ndb.battle_results = ""
         self.db.actions = []
-        for character in self.db.tilt.keys():
-            character.msg(f"|[102|w{self.db.summary}|n", fullwidth=True)
-        self.db.summary = ""
+
         return True
 
     def _sort_actions(self):
@@ -230,7 +229,6 @@ class Tilt(DefaultScript):
         if self.db.tilt:
             for character in self.db.tilt.keys():
                 character.msg(f"|[200|w{msg}|n", fullwidth=True)
-        self.db.summary = f"{self.db.summary} {msg}"
 
     def loss_by_tilt(self, character, knockback):
         if knockback > character.db.statblock.get("knockback_sustained"):
@@ -319,7 +317,7 @@ class Tilt(DefaultScript):
     def show_battle_summary(self):
         for character in self.db.tilt:
             header_str = f"|[200|w|/"\
-            "]]]]]]]]]]]]]]]]]]]]]]]]]]COMBAT]]]]]]]]]]]]]|/" \
+            "]]]]]]]]]]]]]]]]]]]]]]]]]]COMBAT]]]]]]]]]]]]]]|/" \
             "         ]]]]]]]]]]]]]]]]]RESULT]]]]]]]]]]]]]]|/" \
             "                  ]]]]]]]]SCREEN]]]]]]]]]]]]]]|/" \
             "|/"
@@ -329,5 +327,10 @@ class Tilt(DefaultScript):
             targ_str = "|[000|135"\
             f"THEM:|-{character.ndb.target.ndb.battle_results}" \
             "|/"
+            footer_str = f"|[200|w|/"\
+            "]]]]]]]]]]]]]]]]]]]]]]]]]]COMBAT]]]]]]]]]]]]]]|/" \
+            "         ]]]]]]]]]]]]]]]]]RESULT]]]]]]]]]]]]]]|/" \
+            "                  ]]]]]]]]SCREEN]]]]]]]]]]]]]]|/" \
+            "|/"
 
-            character.msg(f"{header_str}{char_str}{targ_str}")
+            character.msg(f"{header_str}{char_str}{targ_str}{footer_str}")
