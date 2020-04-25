@@ -45,11 +45,16 @@ class Tilt(DefaultScript):
             self.add_character(character, target)
 
     def at_repeat(self):
+        self.msg_all("|[520|004|-THE SURGE IS ON!")
         if len(self.db.tilt) < 2:
             self.stop()
         self._sort_actions()
         self._queue_actions()
-        self._cleanup_round()
+        wait_frames = 0
+        for character in self.db.tilt:
+            if character.ndb.keyframes_in_queue > wait_frames:
+                wait_frames = character.ndb.keyframes_in_queue
+        delay(self._keyframes_to_seconds(wait_frames), self._cleanup_round)
 
     def at_stop(self):
         """
@@ -71,7 +76,7 @@ class Tilt(DefaultScript):
         self.db.tilt.update({character: self.get_tilt(character)})
         character.ndb.combat_round_actions = []
         character.ndb.battle_results = ""
-
+        character.ndb.keyframes_in_queue = 0
         return True
 
     def remove_character(self, character):
@@ -98,11 +103,11 @@ class Tilt(DefaultScript):
            invulnerability
         """
         existing_actions = self.db.actions
-        #if not existing_actions and not character.ndb.combat_round_actions:
-        #    if self.time_until_next_repeat() < self.interval/3:
-        #        character.msg(f"It's too late for either player to start a flurry. Wait until the next lull...", fullwidth=True)
-        #        return False
-        #    self.msg_all(f"|[200|w{character} readies an attack.|n")
+        if not existing_actions and not character.ndb.combat_round_actions:
+            if self.time_until_next_repeat() < self.interval/3:
+                character.msg(f"It's too late for either player to start a flurry. Wait until the next lull...")
+                return False
+            self.msg_all(f"|[200|w|-{character} readies an attack.|n")
 
 
 
@@ -116,7 +121,7 @@ class Tilt(DefaultScript):
         if self._keyframes_to_seconds(
                 self._get_character_total_keyframes(character) + self._get_keyframes(action_dict)
         ) > self.interval:
-            character.msg("You can't be sure a combo that long will work...", fullwidth=True)
+            character.msg("You can't be sure a combo that long will work...")
             return False
 
         existing_actions.append(action_dict)
@@ -130,6 +135,7 @@ class Tilt(DefaultScript):
         self.show_battle_summary()
         for character in self.db.tilt.keys():
             del character.ndb.process_stack
+            character.ndb.keyframes_in_queue=0
             character.ndb.combat_round_actions=[]
             character.ndb.battle_results = ""
         self.db.actions = []
@@ -168,7 +174,7 @@ class Tilt(DefaultScript):
                     character.ndb.battle_results += "XX"
 
                 character.ndb.battle_results += f"$pad( {key} ,{totalframes-max(invuln)-len(key)-2},c,|[553|=k||) |n"
-
+                character.ndb.keyframes_in_queue=keyframes_in_queue
 
 
 
@@ -317,8 +323,7 @@ class Tilt(DefaultScript):
             header_str = f"|[200|w|/"\
             "]]]]]]]]]]]]]]]]]]]]]]]]]]COMBAT]]]]]]]]]]]]]]|/" \
             "         ]]]]]]]]]]]]]]]]]RESULT]]]]]]]]]]]]]]|/" \
-            "                  ]]]]]]]]SCREEN]]]]]]]]]]]]]]|/" \
-            "|/"
+            "                  ]]]]]]]]SCREEN]]]]]]]]]]]]]]|/"
             char_str = "|[000|305|/"\
             f"YOU:|-{character.ndb.battle_results}" \
             "|/"
@@ -326,9 +331,6 @@ class Tilt(DefaultScript):
             f"THEM:|-{character.ndb.target.ndb.battle_results}" \
             "|/"
             footer_str = f"|[200|w|/"\
-            "]]]]]]]]]]]]]]]]]]]]]]]]]]COMBAT]]]]]]]]]]]]]]|/" \
-            "         ]]]]]]]]]]]]]]]]]RESULT]]]]]]]]]]]]]]|/" \
-            "                  ]]]]]]]]SCREEN]]]]]]]]]]]]]]|/" \
-            "|/"
+            "]]]]]]]]]]]]]]]]]]]]]]]]]]COMBAT]]]]]]]]]]]]]]|/"
 
             character.msg(f"{header_str}{char_str}{targ_str}{footer_str}")
