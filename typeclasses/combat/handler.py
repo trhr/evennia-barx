@@ -45,7 +45,7 @@ class Tilt(DefaultScript):
             self.add_character(character, target)
 
     def at_repeat(self):
-        self.msg_all("|[520|004]]]]]]]  T H E   S U R G E   I S   O N   ]]]]]")
+        self.msg_all("|[520|004]]]]]]]]]  T H E   S U R G E   I S   O N   ]]]")
 
         if len(self.db.tilt) < 2:
             self.stop()
@@ -174,7 +174,7 @@ class Tilt(DefaultScript):
                 for i in range(startup, max(invuln)):
                     character.ndb.battle_results += "XX"
 
-                character.ndb.battle_results += f"$pad( {key} ,{totalframes-max(invuln)-len(key)-2},c,|[553|=k||) |n"
+                character.ndb.battle_results += f"$pad( {key} ,{totalframes-max(invuln)-len(key)-2},c,|[553|=k||)"
                 character.ndb.keyframes_in_queue=keyframes_in_queue
 
 
@@ -322,8 +322,8 @@ class Tilt(DefaultScript):
     def show_battle_summary(self):
         for character in self.db.tilt:
             header_str = f"|[200|w|/"\
-            "]]]]]]]]]]]]]]]]]]]]]   D O G   F I G H T  ]]|/" \
-            "     ]]]]]]]]]]]]]]]]]]]]]  R E S U L T S  ]]|/"
+            "]]]]]]]]]]]]]]]]]]]]]   D O G   F I G H T  ]]]|/" \
+            "     ]]]]]]]]]]]]]]]]]]]]]  R E S U L T S  ]]]|/"
 
             char_str = "|[000|305|/"\
             f"YOU:|-{character.ndb.battle_results}" \
@@ -334,6 +334,6 @@ class Tilt(DefaultScript):
             "|/"
 
             footer_str = f"|[110|w|/"\
-            "]]]]    A   L U L L   I N   C O M B A T   ]]]]|/"
+            "]]]]]    A   L U L L   I N   C O M B A T   ]]]|/"
 
             character.msg(f"{header_str}{char_str}{targ_str}{footer_str}")
