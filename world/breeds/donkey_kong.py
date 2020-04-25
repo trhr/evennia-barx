@@ -1,6 +1,6 @@
 statblock = {}
 
-donkey_kong_jab1={
+donkey_kong_jab1 = {
     "key": "Jab1",
     "startup": 5,
     "totalframes": 24,

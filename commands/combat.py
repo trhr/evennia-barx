@@ -9,7 +9,7 @@ Invulnerability: Character cannot be hit by an attack on these frames
 from commands.command import Command
 from evennia import create_script
 from typeclasses.combat.handler import Tilt
-from world.breeds.donkey_kong import statblock
+
 
 def _is_valid_attack(character):
     if not character.ndb.tilt_handler:
@@ -17,6 +17,8 @@ def _is_valid_attack(character):
         return False
     else:
         character.msg("|[002|wAttack queued|n")
+        return True
+
 
 class Attack(Command):
     """
@@ -57,7 +59,7 @@ class Jab(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                **statblock.get("attacks").get("jab1")
+                **self.caller.db.statblock.get("attacks").get("jab1")
             )
 
 class Punch(Command):
@@ -71,7 +73,7 @@ class Punch(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                **statblock.get("attacks").get("punch")
+                **self.caller.db.statblock.get("attacks").get("punch")
             )
 
 
@@ -86,7 +88,7 @@ class Haymaker(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                **statblock.get("attacks").get("haymaker")
+                **self.caller.db.statblock.get("attacks").get("haymaker")
             )
 
 class Special(Command):
@@ -100,7 +102,7 @@ class Special(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                **statblock.get("attacks").get("special")
+                **self.caller.db.statblock.get("attacks").get("special")
             )
 
 class Stun(Command):
@@ -114,7 +116,7 @@ class Stun(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                **statblock.get("attacks").get("stun")
+                **self.caller.db.statblock.get("attacks").get("stun")
             )
 
 class Grab(Command):
@@ -128,7 +130,7 @@ class Grab(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                **statblock.get("attacks").get("grab")
+                **self.caller.db.statblock.get("attacks").get("grab")
             )
 
 
@@ -143,7 +145,7 @@ class Dodge(Command):
             self.caller.ndb.tilt_handler.add_action_to_stack(
                 self.caller,
                 self.caller.ndb.target,
-                **statblock.get("attacks").get("dodge")
+                **self.caller.db.statblock.get("attacks").get("dodge")
             )
 
 

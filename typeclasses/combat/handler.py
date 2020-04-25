@@ -97,11 +97,11 @@ class Tilt(DefaultScript):
            invulnerability
         """
         existing_actions = self.db.actions
-        if not existing_actions and not character.ndb.combat_round_actions:
-            if self.time_until_next_repeat() < self.interval/3:
-                character.msg(f"It's too late for either player to start a flurry. Wait until the next lull...", fullwidth=True)
-                return False
-            self.msg_all(f"|[200|w{character} readies an attack.|n")
+        #if not existing_actions and not character.ndb.combat_round_actions:
+        #    if self.time_until_next_repeat() < self.interval/3:
+        #        character.msg(f"It's too late for either player to start a flurry. Wait until the next lull...", fullwidth=True)
+        #        return False
+        #    self.msg_all(f"|[200|w{character} readies an attack.|n")
 
 
 
@@ -112,12 +112,14 @@ class Tilt(DefaultScript):
 
         action_dict.update(kwargs)
 
-        if self._keyframes_to_seconds(self._get_character_total_keyframes(character) + self._get_keyframes(action_dict)) > self.interval:
+        if self._keyframes_to_seconds(
+                self._get_character_total_keyframes(character) + self._get_keyframes(action_dict)
+        ) > self.interval:
             character.msg("You can't be sure a combo that long will work...", fullwidth=True)
             return False
 
         existing_actions.append(action_dict)
-
+        print(existing_actions)
         if len(self.db.actions) > len(existing_actions)-1:
             return True
         else:

@@ -1,4 +1,5 @@
 from evennia.utils.test_resources import EvenniaTest, mockdelay, mockdeferLater
+from evennia.commands.default.tests import CommandTest
 from typeclasses.combat.handler import Tilt
 from evennia import create_script
 from mock import Mock, patch
@@ -177,5 +178,31 @@ class TestCombat(EvenniaTest):
         self.assertAlmostEqual(percentage, 29.616, delta=.05)
 
 
+class CombatCommands(CommandTest):
+    def setUp(self):
+        super().setUp()
+        self.char1.db.statblock = statblock
+        self.char2.db.statblock = statblock
 
+    def get_handler(self):
+        print(f"\nTesting {self.id()}: ")
+        chandler = create_script(Tilt)
+        chandler.add_character(self.char1)
+        self.char1.ndb.target = self.char2
+        chandler.add_character(self.char2)
+        self.char2.ndb.target = self.char1
+        return chandler
 
+    @patch("typeclasses.combat.handler.delay", mockdelay)
+    def test_jab(self):
+        chandler = self.get_handler()
+        from commands.combat import Jab
+        self.assertEqual(chandler.db.actions, [])
+
+        self.call(Jab(), "", caller=self.char1)
+        self.call(Jab(), "", caller=self.char1)
+        self.call(Jab(), "", caller=self.char2)
+
+        self.assertNotEqual(chandler.db.actions, [])
+        chandler.at_repeat()
+        self.assertNotEqual(chandler.get_tilt(self.char1), 0)
