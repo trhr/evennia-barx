@@ -51,7 +51,6 @@ class Tilt(DefaultScript):
         if len(self.db.tilt) < 2:
             self.stop()
         self._sort_actions()
-        self._interrupt_next_action()
         self._queue_actions()
         wait_frames = 0
         for character in self.db.tilt:
@@ -179,12 +178,13 @@ class Tilt(DefaultScript):
             keyframes_in_queue = 0
 
             while character.ndb.combat_round_actions:
+                self._interrupt_next_action()
                 action = character.ndb.combat_round_actions.pop(0)
                 startup = action.get("startup", 0)
                 totalframes = action.get("totalframes", 0)
                 invuln = action.get("invulnerability", 0)
                 key = action.get('key', "")
-
+                #if not action.get("interrupted"):
                 delay(
                     self._keyframes_to_seconds(keyframes_in_queue) + startup,
                     self._process_action,

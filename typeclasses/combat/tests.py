@@ -115,14 +115,16 @@ class TestCombat(EvenniaTest):
     def test_full_round_combat(self):
         chandler = self.get_handler()
         self.assertEqual(self.char1.ndb.combat_round_actions, [])
-        chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
-        chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
-        chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
-        chandler.add_action_to_stack(self.char2, self.char1, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
-        chandler.add_action_to_stack(self.char2, self.char1, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
-        chandler.add_action_to_stack(self.char2, self.char1, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+        chandler.add_action_to_stack(self.char1, self.char2, startup=15, totalframes=24, basedamage=8.0, shieldlag=8, invulnerability = (16, 17))
+        chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=9, basedamage=4.0, shieldlag=8, invulnerability = (6, 7))
+        chandler.add_action_to_stack(self.char1, self.char2, startup=11, totalframes=17, basedamage=6.0, shieldlag=8, invulnerability = (12, 13))
+        chandler.add_action_to_stack(self.char2, self.char1, startup=10, totalframes=25, basedamage=9.0, shieldlag=8, invulnerability = (11, 12))
+        chandler.add_action_to_stack(self.char2, self.char1, startup=10, totalframes=25, basedamage=9.0, shieldlag=8, invulnerability = (11, 12))
         chandler.at_repeat()
         self.assertNotEqual(chandler.get_tilt(self.char1), 0)
+        self.assertEqual(chandler.get_tilt(self.char1), 9)
+        self.assertEqual(chandler.get_tilt(self.char2), 10)
+
         self.assertEqual(self.char1.ndb.combat_round_actions, [])
 
     def test_cleanup(self):
