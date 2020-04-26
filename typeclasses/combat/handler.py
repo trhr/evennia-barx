@@ -51,11 +51,13 @@ class Tilt(DefaultScript):
         if len(self.db.tilt) < 2:
             self.stop()
         self._sort_actions()
+        self._interrupt_next_action()
         self._queue_actions()
         wait_frames = 0
         for character in self.db.tilt:
             if character.ndb.keyframes_in_queue > wait_frames:
                 wait_frames = character.ndb.keyframes_in_queue
+        delay(self._keyframes_to_seconds(wait_frames), self._render_battle_string)
         delay(self._keyframes_to_seconds(wait_frames), self._cleanup_round)
 
     def at_stop(self):
