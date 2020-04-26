@@ -113,8 +113,6 @@ class Tilt(DefaultScript):
             if not self.db.first_to_act:
                 self.db.first_to_act = character
 
-
-
         action_dict = { 
                 "character": character,
                 "target": target,
@@ -134,8 +132,13 @@ class Tilt(DefaultScript):
         else:
             return False
 
-    def _cleanup_round(self):
+    def _render_battle_string(self):
+        for character in self.db.tilt.keys():
+            while len(character.ndb.battle_results) < self.db.maxframes:
+                character.ndb.battle_results+="Z"
         self.show_battle_summary()
+
+    def _cleanup_round(self):
         for character in self.db.tilt.keys():
             del character.ndb.process_stack
             character.ndb.keyframes_in_queue=0
@@ -152,10 +155,25 @@ class Tilt(DefaultScript):
             action = self._get_next_action()
             action.get("character").ndb.combat_round_actions.append(action)
 
+    def _interrupt_next_action(self):
+        participants = sorted(self.db.tilt.keys(), reverse=True, key=lambda p: p.db.statblock.get("weight"))
+        for defender in participants:
+            if defender.ndb.combat_round_actions:
+                defn = defender.ndb.combat_round_actions[0]
+                for attacker in self.get_attackers(defender):
+                    if attacker.ndb.combat_round_actions:
+                        atk = attacker.ndb.combat_round_actions[0]
+                        if max(atk.get("invulnerability")) < defn.get("startup"):
+                            defn.update({"basedamage": 0, "totalframes": min(atk.get("invulnerability")), "interrupted": True, "startup":0})
+
+
+
     def _queue_actions(self):
         """Queue character actions with delays."""
 
-        for character in self.db.tilt.keys():
+        participants = sorted(self.db.tilt.keys(), reverse=True, key=lambda p: p.db.statblock.get("weight"))
+
+        for character in participants:
             keyframes_in_queue = 0
 
             while character.ndb.combat_round_actions:
@@ -174,37 +192,27 @@ class Tilt(DefaultScript):
 
                 ### BLOCK DESIGN
                 # X 'INTERRUPTS' S
+                if action.get('interrupted'):
+                    for i in range (0, totalframes):
+                        character.ndb.battle_results+="I"
+                else:
+                    for i in range (0, startup):
+                        character.ndb.battle_results += "S"
+                    if max(invuln) >= startup:
+                        for i in range(startup, max(invuln)):
+                            character.ndb.battle_results += "X"
+                    if totalframes >= max(invuln):
+                        for i in range(max(invuln), totalframes):
+                            character.ndb.battle_results += "W"
 
-                for i in range (0, startup):
-                    character.ndb.battle_results += "S"
-                for i in range(startup, max(invuln)):
-                    character.ndb.battle_results += "X"
-                for i in range(max(invuln), totalframes):
-                    character.ndb.battle_results += "R"
-            for i in range(len(character.ndb.battle_results), self.db.maxframes):
-                character.ndb.battle_results += "Z"
-
-            ### COMPARE TWO FIGHT KEYFRAME STRINGS
             if self.db.first_to_act:
-                for i in range(0, self.db.maxframes):
-                    participants = self.db.tilt.keys()
+                pass
             else:
-                self.stop()
-
-#                for i in range(0, startup):
-#                    character.ndb.battle_results += "."
-#                for i in range(startup, max(invuln)):
-#                    character.ndb.battle_results += "XX"
-
-#                character.ndb.battle_results += f"$pad( {key} ,{totalframes-max(invuln)-len(key)-2},c,|[553|=k||)"
-#                character.ndb.keyframes_in_queue=keyframes_in_queue
-
+                pass # self.stop here, but it throws errors. Probably 'mark to stop'
 
 
     def _process_action(self, action=None):
-        """
-        Take the action that was previously delayed
-        """
+        """Take the action that was previously delayed"""
 
         if not action:
             action = self._get_next_action()
@@ -250,16 +258,19 @@ class Tilt(DefaultScript):
         return True
 
     def msg_all(self, msg):
+        """Send a message to all players with 'tilt' keys"""
         if self.db.tilt:
             for character in self.db.tilt.keys():
                 character.msg(f"|[200|w{msg}|n")
 
     def loss_by_tilt(self, character, knockback):
+        """Determine if character is knocked out, and remove if so."""
         if knockback > character.db.statblock.get("knockback_sustained"):
             self.msg_all(f"{character} has been knocked out!")
             self.remove_character(character)
 
     def cause_injury(self, character, **kwargs):
+        """Set the character.db.injuries flag"""
         location = kwargs.get("location", None)
         severity = kwargs.get("severity", None)
 
@@ -270,12 +281,11 @@ class Tilt(DefaultScript):
             character.db.injuries.update({location: severity})
 
     def get_tilt(self, character):
+        """Return the tilt of the character, or 0"""
         return self.db.tilt.get(character, 0)
 
     def get_attackers(self, character):
-        """
-        Gets the list of characters targeting a character
-        """
+        """Gets the list of characters targeting a character"""
         attackers=[]
         for participant in self.db.tilt.keys():
             if participant.ndb.target == character:
@@ -287,21 +297,27 @@ class Tilt(DefaultScript):
         return self.db.actions.pop(0)
 
     def _keyframes_to_seconds(self, keyframes):
+        """Convert keyframes into seconds"""
         return keyframes/60
 
     def _get_character_total_keyframes(self, character):
+        """Gets a character's combat_round_actions keyframe totals (queued, waiting for process)"""
         total = 0
-        for action in character.ndb.combat_round_actions:
-            total += action.get("totalframes", 60)
+        if character.ndb.combat_round_actions:
+            for action in character.ndb.combat_round_actions:
+                total += action.get("totalframes", 60)
         return total
 
     def _get_character_queued_keyframes(self, character):
+        """Nothing here"""
         pass
 
     def _get_keyframes(self, action):
+        """Returns the keyframes in an action"""
         return action.get("totalframes", 60)
 
     def _deal_tilt_damage(self, character, target, damage):
+        """Updates the tilt database to deal damage"""
         self.db.tilt.update({target: self.db.tilt.get(target) + damage})
 
 #    def _deal_will_damage(self, character, target, damage):
@@ -321,27 +337,58 @@ class Tilt(DefaultScript):
             return damage
 
     def _calc_tilt_advantage(self, character):
+        """Unused sigma func"""
         tilt = self.get_tilt(character)
         import math
         return 1/(1+math.exp(tilt/100-0.22314))*90+5
 
     def _calc_damage_modifiers(self, basedamage, freshness):
+        """Unused, will calculate freshness and other mods"""
         return basedamage
 
     def calc_knockback(self, p, d, b, character):
+        """Determines the amount of knockback caused by an attack"""
         w = 100
         s = 1.0
         r = 1
         return ((((((p/10)+((p*d)/20))*w*1.4)+18)*s)+b)*r
 
+    def _calc_interrupts(self, *args):
+        args = list(args)
+        for idx, participant in enumerate(args):
+            for i in range(0, len(participant)):
+                if participant[i] in ['S']:
+                    for other_participant in args:
+                        if other_participant[i] in ["X"]:
+                            for j in range(i, len(other_participant)):
+                                k_count = 0
+                                if j not in ["D", "W"]:
+                                    swap = list(args[idx])
+                                    swap[j] = "I"
+                                    # Count how many W's to follow, then half.
+                                    for k in range(j, len(swap)):
+                                        try:
+                                            if swap[k+2] in ["W"]:
+                                                if swap[k+1] in ["W"]:
+                                                    del swap[k]
+                                                    del swap[k+1]
+                                                    swap.append("DD")
+                                        except IndexError:
+                                            pass
+                                    if swap[j+1] not in ["D", "W"]:
+                                        continue
+                                    else:
+                                        args[idx] = ''.join(swap)
+                                        break
+        return args
+
     def _add_to_key_summary(self, action):
-        """
-        ||||HAYMAKER||||
-        """
+        """returns ||||HAYMAKER|||| text """
         totalframes = action.get("totalframes")
         return f"$pad({action.get('key')},{totalframes},c,|[553|=k||)|n"
 
     def show_battle_summary(self):
+        """Msgs all characters a round summary"""
         for character in self.db.tilt:
             header_str = f"|[200|w|/"\
             "]]]]]]]]]]]]]]]]]]]]]   D O G   F I G H T  ]]]|/" \

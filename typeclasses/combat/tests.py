@@ -49,6 +49,11 @@ class TestCombat(EvenniaTest):
 #        self.assertTrue(chandler._process_action())
 #        self.assertNotEquals(chandler.get_tilt(self.char2), 0)
 
+    def test_get_keyframes(self):
+        chandler = self.get_handler()
+        res = chandler._get_character_total_keyframes(self.char1)
+        self.assertEqual(0, res)
+
     def test_victory_by_tilt(self):
         chandler = self.get_handler()
         chandler.db.tilt[self.char1]=100000
@@ -179,16 +184,58 @@ class TestCombat(EvenniaTest):
         percentage = chandler._calc_tilt_advantage(self.char1)
         self.assertAlmostEqual(percentage, 29.616, delta=.05)
 
+    def test_interrupt_battle_string(self):
+        chandler = self.get_handler()
+        chandler.db.maxframes=60
+        p1 = "SSSSXXWWWWWWWWWSSSSSSSSSSXWWWWWWSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+        p2 = "SSSSSSSSXWWWWWWSSSSSSXWWWWWWSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+        ac = "SSSSSSIWWSSSSSWWSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSDDDDDDDDDDDD"
+        ex = "SSSSIIIWWSSSSSSSSSXWWWWWWSSSSSSSSSSSSSSSSSSSSSSSSSSSSSDDDDDD"
+
+        p1, p2 = chandler._calc_interrupts(p1, p2)
+        #self.assertEqual(ex, p2)
+
     def test_interrupt(self):
         chandler = self.get_handler()
-        chandler.add_action_to_stack(self.char2, self.char1, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability=range(5, 6))
+        chandler.db.maxframes=60
+        chandler.add_action_to_stack(self.char1, self.char2, startup=5, invulnerability=(6,7), totalframes=20, basedamage=5)
+        chandler.add_action_to_stack(self.char2, self.char1, startup=13, invulnerability=(14,15), totalframes=34, basedamage=15)
+        # Character 1 interrupts Character 2
+        chandler._sort_actions()
+        chandler._interrupt_next_action()
+        self.assertEqual(chandler._get_character_total_keyframes(self.char2), 6)
+        chandler._queue_actions()
+        chandler.add_action_to_stack(self.char1, self.char2, startup=6, invulnerability=(7,8), totalframes=18, basedamage=5)
+        chandler.add_action_to_stack(self.char2, self.char1, startup=2, invulnerability=(3,4), totalframes=6, basedamage=15)
+        # Character 2 interrupts Character 1
+        chandler._sort_actions()
+        chandler._interrupt_next_action()
+        self.assertEqual(chandler._get_character_total_keyframes(self.char1), 3)
+        chandler._queue_actions()
+        chandler.add_action_to_stack(self.char1, self.char2, startup=9, invulnerability=(10, 11, 12), totalframes=18, basedamage=13)
+        chandler.add_action_to_stack(self.char2, self.char1, startup=9, invulnerability=(10, 11, 12), totalframes=17, basedamage=15)
+        chandler._sort_actions()
+        chandler._interrupt_next_action()
+        chandler._queue_actions()
+        p1_results="SSSSSXXWWWWWWWWWWWWWIIISSSSSSSSSXXXWWWWWW"
+        self.assertEqual(self.char1.ndb.battle_results, p1_results)
+        p2_results="IIIIIISSXXWWSSSSSSSSSXXXWWWWW"
+        self.assertEqual(self.char2.ndb.battle_results, p2_results)
 
+    #@patch("typeclasses.combat.handler.delay", mockdelay)
     def test_block_design(self):
         chandler = self.get_handler()
-        chandler.db.maxframes = 200
+        chandler.db.maxframes = 210
+        chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+        chandler.add_action_to_stack(self.char2, self.char1, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+        chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+        chandler.add_action_to_stack(self.char2, self.char1, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
+
+        chandler._sort_actions()
         chandler._queue_actions()
-        self.assertEqual(len(self.char1.ndb.battle_results), 200)
-        self.assertEqual(len(self.char2.ndb.battle_results), 200)
+        chandler._render_battle_string()
+        self.assertEqual(len(self.char1.ndb.battle_results), 210)
+        self.assertEqual(len(self.char2.ndb.battle_results), 210)
 
 
 class CombatCommands(CommandTest):

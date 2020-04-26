@@ -6,7 +6,7 @@ donkey_kong_jab1 = {
     "totalframes": 24,
     "basedamage": 4.0,
     "shieldlag": 8,
-    "invulnerability": range(5, 6)
+    "invulnerability": [5,6]
 }
 donkey_kong_jab2={
     "key": "Jab2",
@@ -14,7 +14,7 @@ donkey_kong_jab2={
     "totalframes": 34,
     "basedamage": 6.0,
     "shieldlag": 11,
-    "invulnerability": range(5, 6)
+    "invulnerability": [5,6]
 }
 
 donkey_kong_punch={
@@ -23,7 +23,7 @@ donkey_kong_punch={
     "totalframes": 34,
     "basedamage": 9.0,
     "shieldlag": 7,
-    "invulnerability": range(7, 9)
+    "invulnerability": [7, 8, 9]
 }
 
 donkey_kong_haymaker={
@@ -32,7 +32,7 @@ donkey_kong_haymaker={
     "totalframes": 54,
     "basedamage": 21,
     "shieldlag": 16,
-    "invulnerability": range(22, 23)
+    "invulnerability": [22, 23]
 }
 
 donkey_kong_special={
@@ -41,7 +41,7 @@ donkey_kong_special={
     "totalframes": 62,
     "basedamage": 27,
     "shieldlag": 14,
-    "invulnerability": range(26, 27)
+    "invulnerability": [26, 27]
 }
 
 donkey_kong_stun={
@@ -50,7 +50,7 @@ donkey_kong_stun={
     "totalframes": 47,
     "basedamage": 28,
     "shieldlag": 15,
-    "invulnerability": range(19, 20)
+    "invulnerability": [19, 20]
 }
 
 donkey_kong_grab={
