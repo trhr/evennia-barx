@@ -104,6 +104,7 @@ class TestCombat(EvenniaTest):
     @patch("typeclasses.combat.handler.delay", mockdelay)
     def test_attack_combo(self):
         chandler = self.get_handler()
+        chandler.db.maxframes = 100
         chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
         chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
         chandler.add_action_to_stack(self.char1, self.char2, startup=5, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = range(5, 6))
@@ -124,7 +125,6 @@ class TestCombat(EvenniaTest):
         self.assertNotEqual(chandler.get_tilt(self.char1), 0)
         self.assertEqual(chandler.get_tilt(self.char1), 9)
         self.assertEqual(chandler.get_tilt(self.char2), 10)
-
         self.assertEqual(self.char1.ndb.combat_round_actions, [])
 
     def test_cleanup(self):

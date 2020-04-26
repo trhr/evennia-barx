@@ -29,13 +29,13 @@ class Tilt(DefaultScript):
     def at_script_creation(self):
         self.repeats = 0
         self.start_delay = True
-        self.interval = 15
+        self.interval = 60
         self.persistent = True
         self.key = "TiltHandler"
         self.db.tilt = {}
         self.db.target = {}
         self.db.actions = []
-        self.db.maxframes = 240
+        self.db.maxframes = 60
 
     def at_start(self):
         """
@@ -147,7 +147,6 @@ class Tilt(DefaultScript):
             character.ndb.battle_results = ""
         self.db.actions = []
         self.db.first_to_act = None
-
         return True
 
     def _sort_actions(self):
