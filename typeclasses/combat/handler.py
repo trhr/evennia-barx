@@ -35,6 +35,7 @@ class Tilt(DefaultScript):
         self.db.tilt = {}
         self.db.target = {}
         self.db.actions = []
+        self.db.maxframes = 240
 
     def at_start(self):
         """
@@ -109,6 +110,8 @@ class Tilt(DefaultScript):
                 character.msg(f"It's too late for either player to start a flurry. Wait until the next lull...")
                 return False
             self.msg_all(f"|[200|w|-{character} readies an attack.|n")
+            if not self.db.first_to_act:
+                self.db.first_to_act = character
 
 
 
@@ -119,15 +122,14 @@ class Tilt(DefaultScript):
 
         action_dict.update(kwargs)
 
-        if self._keyframes_to_seconds(
-                self._get_character_total_keyframes(character) + self._get_keyframes(action_dict)
-        ) > self.interval:
-            character.msg("You can't be sure a combo that long will work...")
+        if self._get_character_total_keyframes(character) + self._get_keyframes(action_dict) > self.db.maxframes:
+            character.msg("You can't plan that far ahead!")
             return False
 
         existing_actions.append(action_dict)
 
         if len(self.db.actions) > len(existing_actions)-1:
+            self._sort_actions()
             return True
         else:
             return False
@@ -140,6 +142,7 @@ class Tilt(DefaultScript):
             character.ndb.combat_round_actions=[]
             character.ndb.battle_results = ""
         self.db.actions = []
+        self.db.first_to_act = None
 
         return True
 
@@ -169,13 +172,32 @@ class Tilt(DefaultScript):
                 )
                 keyframes_in_queue += totalframes
 
-                for i in range(0, startup):
-                    character.ndb.battle_results += "."
-                for i in range(startup, max(invuln)):
-                    character.ndb.battle_results += "XX"
+                ### BLOCK DESIGN
+                # X 'INTERRUPTS' S
 
-                character.ndb.battle_results += f"$pad( {key} ,{totalframes-max(invuln)-len(key)-2},c,|[553|=k||)"
-                character.ndb.keyframes_in_queue=keyframes_in_queue
+                for i in range (0, startup):
+                    character.ndb.battle_results += "S"
+                for i in range(startup, max(invuln)):
+                    character.ndb.battle_results += "X"
+                for i in range(max(invuln), totalframes):
+                    character.ndb.battle_results += "R"
+            for i in range(len(character.ndb.battle_results), self.db.maxframes):
+                character.ndb.battle_results += "Z"
+
+            ### COMPARE TWO FIGHT KEYFRAME STRINGS
+            if self.db.first_to_act:
+                for i in range(0, self.db.maxframes):
+                    participants = self.db.tilt.keys()
+            else:
+                self.stop()
+
+#                for i in range(0, startup):
+#                    character.ndb.battle_results += "."
+#                for i in range(startup, max(invuln)):
+#                    character.ndb.battle_results += "XX"
+
+#                character.ndb.battle_results += f"$pad( {key} ,{totalframes-max(invuln)-len(key)-2},c,|[553|=k||)"
+#                character.ndb.keyframes_in_queue=keyframes_in_queue
 
 
 
@@ -199,7 +221,7 @@ class Tilt(DefaultScript):
         #tilt_damage = tilt_damage*(self._calc_tilt_advantage(character)/100)
         freshness = 0
         damage = self._calc_damage_modifiers(basedamage, freshness)
-        print(f"[{damage} dealt]")
+        #print(f"[{damage} dealt]")
         self._deal_tilt_damage(character, target, damage)
 
         effect_str = ""
@@ -223,7 +245,7 @@ class Tilt(DefaultScript):
         #self.msg_all(f"{character} {attack_verb} a {weapon_noun} at {target}. {effect_str}")
         #character.ndb.battle_results += self._add_to_key_summary(action)
         knockback = self.calc_knockback(self.get_tilt(target), basedamage, baseknockback, target)
-        print(f"[{knockback}] knockback")
+        #print(f"[{knockback}] knockback")
         self.loss_by_tilt(target, knockback)
         return True
 
