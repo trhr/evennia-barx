@@ -27,16 +27,18 @@ from world.topdogs import scorelist
 CONNECTION_SCREEN = """
 |r==]]]]==========================================================[[[[==|n
 
-             |gBarx|n - |wA TRHR EXCLUSIVE PRODUCTION|n - |g#1 MUD|n
+             |gBarx|n - |*A TRHR EXCLUSIVE PRODUCTION|n - |g#1 MUD|n
 
         If you have an existing account, connect to it by typing:
-                  |w connect <username> <password>|n
+                  |* connect <username> <password>|n
 
         To create an account, type:
-                  |w create <username> <password>|n
+                  |* create <username> <password>|n
 
         If you have spaces in your username, enclose it in quotes.
 
+        For licensing information, type |*license|n
+        
 {top_dogs}
-
+        
 |r==]]]]==========================================================[[[[==|n""".format(top_dogs=scorelist())
