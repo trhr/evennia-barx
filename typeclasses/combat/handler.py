@@ -47,7 +47,8 @@ class Tilt(DefaultScript):
 
     def at_repeat(self):
         self.msg_all("|[520|004]]]]]]]]]  T H E   S U R G E   I S   O N   ]]]")
-
+        for character in self.db.tilt:
+            character.ndb.tilt_starting_bg = self._tilt_to_bgcolor(self.get_tilt(character))
         if len(self.db.tilt) < 2:
             self.stop()
         self._sort_actions()
@@ -145,6 +146,9 @@ class Tilt(DefaultScript):
             character.ndb.combat_round_actions=[]
             character.ndb.battle_results = ""
         self.db.actions = []
+        if not self.db.first_to_act:
+            # Nobody acted this round
+            self.stop()
         self.db.first_to_act = None
         return True
 
@@ -419,19 +423,63 @@ class Tilt(DefaultScript):
     def show_battle_summary(self):
         """Msgs all characters a round summary"""
         for character in self.db.tilt:
-            header_str = f"|[200|w|/"\
+            header_str = f"|500|w|/"\
             "]]]]]]]]]]]]]]]]]]]]]   D O G   F I G H T  ]]]|/" \
             "     ]]]]]]]]]]]]]]]]]]]]]  R E S U L T S  ]]]|/"
 
             char_str = "|[000|305|/"\
-            f"YOU:|-{character.ndb.battle_results}" \
+            f"YOU:|-{self._battle_summary_visual(character, character.ndb.battle_results)}" \
             "|/"
 
             targ_str = "|[000|135"\
-            f"THEM:|-{character.ndb.target.ndb.battle_results}" \
+            f"THEM:|-{self._battle_summary_visual(character.ndb.target, character.ndb.target.ndb.battle_results)}" \
             "|/"
 
             footer_str = f"|[110|w|/"\
             "]]]]]    A   L U L L   I N   C O M B A T   ]]]|/"
 
             character.msg(f"{header_str}{char_str}{targ_str}{footer_str}")
+
+    def _tilt_to_bgcolor(self, tilt):
+        """
+        Args:
+            tilt(int) - Current tilt
+        Returns:
+            color(str) - |[000 to |[500
+        """
+
+        if tilt == 0:
+            return "|[000"
+        elif tilt < 20:
+            return "|[100"
+        elif tilt < 40:
+            return "|[200"
+        elif tilt < 60:
+            return "|[300"
+        elif tilt < 80:
+            return "|[400"
+        elif tilt < 100:
+            return "|[500"
+
+
+    def _battle_summary_visual(self, character, results):
+        if not results:
+            return "Nothing happened."
+        result_arr=list(results)
+        final_background = self._tilt_to_bgcolor(self.db.tilt.get(character, 0))
+        starting_background = character.ndb.tilt_starting_bg
+        for frame in result_arr:
+            if frame in ["I","Y",]:
+                frame = "|550X"
+            if frame in ["S",]:
+                frame = "|110 "
+            if frame in ["W",]:
+                frame = "|033 "
+            if frame in ["X",]:
+                frame = "|520!"
+
+        result_arr.append(f"|/COND:|-{starting_background}|w--->{final_background}    |n")
+        results = ''.join(result_arr)
+        return results
+
+
