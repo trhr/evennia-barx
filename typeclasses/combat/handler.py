@@ -64,7 +64,6 @@ class Tilt(DefaultScript):
         """
         Cleans up the script
         """
-        self.show_battle_summary()
         characters = self.db.tilt.keys()
         for character in characters:
             self.remove_character(character)
