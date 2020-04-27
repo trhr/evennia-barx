@@ -155,47 +155,65 @@ class Tilt(DefaultScript):
             action = self._get_next_action()
             action.get("character").ndb.combat_round_actions.append(action)
 
-    def _interrupt_next_action(self):
-        participants = sorted(self.db.tilt.keys(), reverse=True, key=lambda p: p.db.statblock.get("weight"))
-        for defender in participants:
-            if defender.ndb.combat_round_actions:
-                defn = defender.ndb.combat_round_actions[0]
-                for attacker in self.get_attackers(defender):
-                    if attacker.ndb.combat_round_actions:
-                        atk = attacker.ndb.combat_round_actions[0]
-                        if max(atk.get("invulnerability")) < defn.get("startup"):
-                            defn.update({"basedamage": 0, "totalframes": min(atk.get("invulnerability")), "interrupted": True, "startup":0})
+    def _interrupt_next_action(self, character, target, round):
+        try:
+            atk = character.ndb.combat_round_actions[round]
+            defn = target.ndb.combat_round_actions[round]
+        except IndexError:
+            print("Nothing to interrupt")
+            return
+        if defn.get("key", "no_action").lower() in ["dodge", "stun"]:
 
+            print("Target dodged")
+            if (max(defn.get("invulnerability", 0)) <= max(atk.get("invulnerability"))) and (max(defn.get("invulnerability", 0)) >= min(atk.get("invulnerability"))):
+                print(f"Dodge succeeded {defn.get('invulnerability')} {atk.get('invulnerability')}")
+                # CRITICAL DODGE
+                for a in character.ndb.combat_round_actions[round:]:
+                    a.update({"dodged": True})
+        elif max(atk.get("invulnerability")) < defn.get("startup"):
+            target.ndb.combat_round_actions[round].update({"basedamage": 0, "totalframes": min(atk.get("invulnerability")), "interrupted": True, "startup":0})
 
 
     def _queue_actions(self):
         """Queue character actions with delays."""
 
         participants = sorted(self.db.tilt.keys(), reverse=True, key=lambda p: p.db.statblock.get("weight"))
+        longest_round = self._get_longest_round(participants)
+        for round in range(0, longest_round):
+            for character in participants:
+                if character.ndb.combat_round_actions:
+                    if character.ndb.target:
+                        if len(character.ndb.target.ndb.combat_round_actions) >= round:
+                            if len(character.ndb.combat_round_actions) >= round:
+                                self._interrupt_next_action(character, character.ndb.target, round)
 
         for character in participants:
             keyframes_in_queue = 0
 
             while character.ndb.combat_round_actions:
-                self._interrupt_next_action()
                 action = character.ndb.combat_round_actions.pop(0)
+                print(f"Queuing action {action}")
+
                 startup = action.get("startup", 0)
                 totalframes = action.get("totalframes", 0)
                 invuln = action.get("invulnerability", 0)
                 key = action.get('key', "")
-                #if not action.get("interrupted"):
-                delay(
-                    self._keyframes_to_seconds(keyframes_in_queue) + startup,
-                    self._process_action,
-                    action
-                )
+                if not action.get("dodged"):
+                    delay(
+                        self._keyframes_to_seconds(keyframes_in_queue) + startup,
+                        self._process_action,
+                        action
+                    )
                 keyframes_in_queue += totalframes
 
                 ### BLOCK DESIGN
                 # X 'INTERRUPTS' S
-                if action.get('interrupted'):
+                if action.get('dodged'):
+                    for i in range(0, totalframes):
+                        character.ndb.battle_results += "Y"
+                elif action.get('interrupted'):
                     for i in range (0, totalframes):
-                        character.ndb.battle_results+="I"
+                        character.ndb.battle_results += "I"
                 else:
                     for i in range (0, startup):
                         character.ndb.battle_results += "S"
@@ -353,6 +371,17 @@ class Tilt(DefaultScript):
         s = 1.0
         r = 1
         return ((((((p/10)+((p*d)/20))*w*1.4)+18)*s)+b)*r
+
+    def _get_longest_round(self, args):
+        round = 0
+        if len(args) < 1:
+            return round
+        for char in args:
+            if char.ndb:
+                if char.ndb.combat_round_actions:
+                    if len(char.ndb.combat_round_actions) > round:
+                        round = len(char.ndb.combat_round_actions)
+        return round
 
     def _calc_interrupts(self, *args):
         args = list(args)

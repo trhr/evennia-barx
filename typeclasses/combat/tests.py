@@ -203,21 +203,13 @@ class TestCombat(EvenniaTest):
         chandler.add_action_to_stack(self.char1, self.char2, startup=5, invulnerability=(6,7), totalframes=20, basedamage=5)
         chandler.add_action_to_stack(self.char2, self.char1, startup=13, invulnerability=(14,15), totalframes=34, basedamage=15)
         # Character 1 interrupts Character 2
-        chandler._sort_actions()
-        chandler._interrupt_next_action()
-        self.assertEqual(chandler._get_character_total_keyframes(self.char2), 6)
-        chandler._queue_actions()
         chandler.add_action_to_stack(self.char1, self.char2, startup=6, invulnerability=(7,8), totalframes=18, basedamage=5)
         chandler.add_action_to_stack(self.char2, self.char1, startup=2, invulnerability=(3,4), totalframes=6, basedamage=15)
         # Character 2 interrupts Character 1
-        chandler._sort_actions()
-        chandler._interrupt_next_action()
-        self.assertEqual(chandler._get_character_total_keyframes(self.char1), 3)
-        chandler._queue_actions()
         chandler.add_action_to_stack(self.char1, self.char2, startup=9, invulnerability=(10, 11, 12), totalframes=18, basedamage=13)
         chandler.add_action_to_stack(self.char2, self.char1, startup=9, invulnerability=(10, 11, 12), totalframes=17, basedamage=15)
+        # No interrupts
         chandler._sort_actions()
-        chandler._interrupt_next_action()
         chandler._queue_actions()
         p1_results="SSSSSXXWWWWWWWWWWWWWIIISSSSSSSSSXXXWWWWWW"
         self.assertEqual(self.char1.ndb.battle_results, p1_results)
@@ -238,7 +230,23 @@ class TestCombat(EvenniaTest):
         chandler._render_battle_string()
         self.assertEqual(len(self.char1.ndb.battle_results), 210)
         self.assertEqual(len(self.char2.ndb.battle_results), 210)
+       # p1_results="SSSSSXXWWWWWWWWWWWWWIIISSSSSSSSSXXXWWWWWW"
+       # self.assertEqual(self.char1.ndb.battle_results, p1_results)
 
+    def test_dodge(self):
+        chandler = self.get_handler()
+        chandler.db.maxframes=100
+        chandler.add_action_to_stack(self.char1, self.char2, startup=7, totalframes=26, basedamage=0.0, shieldlag=-1, invulnerability = [8,9])
+        chandler.add_action_to_stack(self.char2, self.char1, startup=7, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = [8,9])
+        chandler.add_action_to_stack(self.char1, self.char2, key="dodge", startup=0, totalframes=26, basedamage=0.0, shieldlag=-1, invulnerability = [3,4,5,6,6,7,8,9,10,11,12,13,14,15,16,17,18])
+        chandler.add_action_to_stack(self.char2, self.char1, startup=16, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = [17, 18, 19])
+        chandler.add_action_to_stack(self.char1, self.char2, startup=7, totalframes=26, basedamage=0.0, shieldlag=-1, invulnerability = [8,9])
+        chandler.add_action_to_stack(self.char2, self.char1, startup=16, totalframes=24, basedamage=4.0, shieldlag=8, invulnerability = [17, 18, 19])
+        chandler._sort_actions()
+        chandler._queue_actions()
+        chandler._render_battle_string()
+        p2_results="SSSSSSSXXWWWWWWWWWWWWWWWYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+        self.assertEqual(self.char2.ndb.battle_results, p2_results)
 
 class CombatCommands(CommandTest):
     def setUp(self):
