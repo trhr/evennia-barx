@@ -106,15 +106,14 @@ class Tilt(DefaultScript):
            invulnerability
         """
         existing_actions = self.db.actions
-        if not existing_actions and not character.ndb.combat_round_actions:
+        if not self.db.first_to_action:
             if self.time_until_next_repeat() < self.interval/3:
                 character.msg(f"It's too late for either player to start a flurry. Wait until the next lull...")
                 return False
             self.msg_all(f"|[200|w|-{character} readies an attack.|n")
-            if not self.db.first_to_act:
-                self.db.first_to_act = character
+            self.db.first_to_act=character
 
-        action_dict = { 
+        action_dict = {
                 "character": character,
                 "target": target,
                 }
