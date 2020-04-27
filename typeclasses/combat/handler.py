@@ -35,7 +35,7 @@ class Tilt(DefaultScript):
         self.db.tilt = {}
         self.db.target = {}
         self.db.actions = []
-        self.db.maxframes = 60
+        self.db.maxframes = 120
 
     def at_start(self):
         """
