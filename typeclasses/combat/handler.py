@@ -29,7 +29,7 @@ class Tilt(DefaultScript):
     def at_script_creation(self):
         self.repeats = 0
         self.start_delay = True
-        self.interval = 3
+        self.interval = 15
         self.persistent = True
         self.key = "TiltHandler"
         self.db.tilt = {}
@@ -80,6 +80,7 @@ class Tilt(DefaultScript):
         self.db.tilt.update({character: self.get_tilt(character)})
         character.ndb.combat_round_actions = []
         character.ndb.battle_results = ""
+        self.ndb.story_results = ""
         character.ndb.keyframes_in_queue = 0
         return True
 
@@ -136,7 +137,7 @@ class Tilt(DefaultScript):
     def _render_battle_string(self):
         for character in self.db.tilt.keys():
             while len(character.ndb.battle_results) < self.db.maxframes:
-                character.ndb.battle_results+="Z"
+                character.ndb.battle_results += "Z"
         self.show_battle_summary()
 
     def _cleanup_round(self):
@@ -145,6 +146,7 @@ class Tilt(DefaultScript):
             character.ndb.keyframes_in_queue=0
             character.ndb.combat_round_actions=[]
             character.ndb.battle_results = ""
+            self.ndb.story_results = ""
         self.db.actions = []
         if not self.db.first_to_act:
             # Nobody acted this round
@@ -165,16 +167,23 @@ class Tilt(DefaultScript):
         except IndexError:
             print("Nothing to interrupt")
             return
+        self.ndb.story_results += f"{character} hits {target} with a {atk.get('key').lower()}. "
+
         if defn.get("key", "no_action").lower() in ["dodge", "stun"]:
 
-            print("Target dodged")
+            self.ndb.story_results += f"{character} tried to dodge the blows raining down, "
+
             if (max(defn.get("invulnerability", 0)) <= max(atk.get("invulnerability"))) and (max(defn.get("invulnerability", 0)) >= min(atk.get("invulnerability"))):
                 print(f"Dodge succeeded {defn.get('invulnerability')} {atk.get('invulnerability')}")
-                # CRITICAL DODGE
+                self.ndb.story_results += f"and found an opening on {target}! "
                 for a in character.ndb.combat_round_actions[round:]:
                     a.update({"dodged": True})
+            else:
+                self.ndb.story_results += "but timed it wrong."
         elif max(atk.get("invulnerability")) < defn.get("startup"):
-            target.ndb.combat_round_actions[round].update({"basedamage": 0, "totalframes": min(atk.get("invulnerability")), "interrupted": True, "startup":0})
+            #target.ndb.combat_round_actions[round].update({"basedamage": 0, "totalframes": min(atk.get("invulnerability")), "interrupted": True, "startup":0})
+            character.ndb.combat_round_actions[round].update({"basedamage": character.ndb.combat_round_actions[round].get("basedamage")/2})
+            self.ndb.story_results += f"{target} anticipates {character}'s next attack! "
 
 
     def _queue_actions(self):
@@ -196,7 +205,6 @@ class Tilt(DefaultScript):
             while character.ndb.combat_round_actions:
                 action = character.ndb.combat_round_actions.pop(0)
                 print(f"Queuing action {action}")
-
                 startup = action.get("startup", 0)
                 totalframes = action.get("totalframes", 0)
                 invuln = action.get("invulnerability", 0)
@@ -288,7 +296,8 @@ class Tilt(DefaultScript):
     def loss_by_tilt(self, character, knockback):
         """Determine if character is knocked out, and remove if so."""
         if knockback > character.db.statblock.get("knockback_sustained"):
-            self.msg_all(f"{character} has been knocked out!")
+            #self.msg_all(f"{character} has been knocked out! ")
+            self.ndb.story_results+=f"{character} has been knocked out!"
             self.remove_character(character)
 
     def cause_injury(self, character, **kwargs):
@@ -428,17 +437,18 @@ class Tilt(DefaultScript):
             "     ]]]]]]]]]]]]]]]]]]]]]  R E S U L T S  ]]]|/"
 
             char_str = "|[000|305|/"\
-            f"YOU:|-{self._battle_summary_visual(character, character.ndb.battle_results)}" \
+            f"YOU:|-{character.ndb.battle_results}" \
             "|/"
 
             targ_str = "|[000|135"\
-            f"THEM:|-{self._battle_summary_visual(character.ndb.target, character.ndb.target.ndb.battle_results)}" \
+            f"THEM:|-{character.ndb.target.ndb.battle_results}" \
             "|/"
 
             footer_str = f"|[110|w|/"\
             "]]]]]    A   L U L L   I N   C O M B A T   ]]]|/"
 
             character.msg(f"{header_str}{char_str}{targ_str}{footer_str}")
+            character.msg(self.ndb.story_results)
 
     def _tilt_to_bgcolor(self, tilt):
         """

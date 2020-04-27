@@ -50,7 +50,7 @@ donkey_kong_stun={
     "totalframes": 47,
     "basedamage": 28,
     "shieldlag": 15,
-    "invulnerability": [19, 20]
+    "invulnerability": [19,20]
 }
 
 donkey_kong_grab={
