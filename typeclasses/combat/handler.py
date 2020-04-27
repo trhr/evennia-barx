@@ -466,20 +466,23 @@ class Tilt(DefaultScript):
         if not results:
             return "Nothing happened."
         result_arr=list(results)
+        new_arr = []
         final_background = self._tilt_to_bgcolor(self.db.tilt.get(character, 0))
         starting_background = character.ndb.tilt_starting_bg
         for idx, frame in enumerate(result_arr):
             if frame in ["I","Y",]:
-                result_arr[idx] = "|550X"
+                new_arr.append("|550X")
             if frame in ["S",]:
-                result_arr[idx] = "|110 "
+                new_arr.append("|110 ")
             if frame in ["W",]:
-                result_arr[idx] = "|033 "
+                new_arr.append("|033 ")
             if frame in ["X",]:
-                result_arr[idx] = "|520!"
+                new_arr.append("|520!")
+            if frame in ["Z",]:
+                new_arr.append("|")
 
-        result_arr.append(f"|/COND:|-{starting_background}|w--->{final_background}    |n")
-        results = ''.join(result_arr)
+        new_arr.append(f"|/COND:|-{starting_background}|w--->{final_background}    |n")
+        results = ''.join(new_arr)
         return results
 
 
