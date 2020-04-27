@@ -29,7 +29,7 @@ class Tilt(DefaultScript):
     def at_script_creation(self):
         self.repeats = 0
         self.start_delay = True
-        self.interval = 60
+        self.interval = 3
         self.persistent = True
         self.key = "TiltHandler"
         self.db.tilt = {}
@@ -107,7 +107,7 @@ class Tilt(DefaultScript):
            invulnerability
         """
         existing_actions = self.db.actions
-        if not self.db.first_to_action:
+        if not self.db.first_to_act:
             if self.time_until_next_repeat() < self.interval/3:
                 character.msg(f"It's too late for either player to start a flurry. Wait until the next lull...")
                 return False
@@ -468,15 +468,15 @@ class Tilt(DefaultScript):
         result_arr=list(results)
         final_background = self._tilt_to_bgcolor(self.db.tilt.get(character, 0))
         starting_background = character.ndb.tilt_starting_bg
-        for frame in result_arr:
+        for idx, frame in enumerate(result_arr):
             if frame in ["I","Y",]:
-                frame = "|550X"
+                result_arr[idx] = "|550X"
             if frame in ["S",]:
-                frame = "|110 "
+                result_arr[idx] = "|110 "
             if frame in ["W",]:
-                frame = "|033 "
+                result_arr[idx] = "|033 "
             if frame in ["X",]:
-                frame = "|520!"
+                result_arr[idx] = "|520!"
 
         result_arr.append(f"|/COND:|-{starting_background}|w--->{final_background}    |n")
         results = ''.join(result_arr)
